@@ -19,7 +19,7 @@ const AIGenerator = () => {
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [showRemovalCanvas, setShowRemovalCanvas] = useState(false);
+  const [isRemovalMode, setIsRemovalMode] = useState(false);
   const [canvasRef, setCanvasRef] = useState<HTMLCanvasElement | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [circledArea, setCircledArea] = useState<{x: number, y: number}[]>([]);
@@ -76,7 +76,7 @@ const AIGenerator = () => {
   };
 
   const handleSmartRemoveClick = () => {
-    setShowRemovalCanvas(true);
+    setIsRemovalMode(true);
   };
 
   const handleSmartRemove = async () => {
@@ -116,7 +116,7 @@ const AIGenerator = () => {
       if (data?.image) {
         setGeneratedImages((prev) => [data.image, ...prev]);
         toast.success("Image edited successfully!");
-        setShowRemovalCanvas(false);
+        setIsRemovalMode(false);
         setCircledArea([]);
         setSelectedImageIndex(null);
       }
@@ -268,121 +268,128 @@ const AIGenerator = () => {
       </main>
 
       {/* Image Preview Dialog */}
-      <Dialog open={selectedImageIndex !== null} onOpenChange={() => setSelectedImageIndex(null)}>
+      <Dialog open={selectedImageIndex !== null} onOpenChange={() => {
+        setSelectedImageIndex(null);
+        setIsRemovalMode(false);
+        setCircledArea([]);
+      }}>
         <DialogContent className="max-w-6xl p-0">
           {selectedImageIndex !== null && (
             <div className="relative">
-              <img
-                src={generatedImages[selectedImageIndex]}
-                alt={`Generated ${selectedImageIndex + 1}`}
-                className="w-full h-auto rounded-lg"
-              />
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-black/80 p-4 rounded-lg">
-                <Button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleUpscale(generatedImages[selectedImageIndex]);
-                  }}
-                  disabled={isProcessing}
-                  size="lg"
-                  variant="secondary"
-                  className="gap-2"
-                >
-                  {isProcessing ? (
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                  ) : (
-                    <Sparkles className="h-5 w-5" />
-                  )}
-                  Upscale
-                </Button>
-                <Button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleSmartRemoveClick();
-                  }}
-                  disabled={isProcessing}
-                  size="lg"
-                  variant="secondary"
-                  className="gap-2"
-                >
-                  <Eraser className="h-5 w-5" />
-                  Smart Remove
-                </Button>
-                <Button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDownload(generatedImages[selectedImageIndex], selectedImageIndex);
-                  }}
-                  size="lg"
-                  variant="secondary"
-                  className="gap-2"
-                >
-                  <Download className="h-5 w-5" />
-                  Download
-                </Button>
-              </div>
+              {isRemovalMode ? (
+                <div className="p-6 space-y-4">
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">Circle the area to remove</h3>
+                    <p className="text-sm text-muted-foreground">Draw a circle around the object you want to remove</p>
+                  </div>
+                  <canvas
+                    ref={setCanvasRef}
+                    width={1024}
+                    height={1024}
+                    className="w-full border border-border rounded-lg cursor-crosshair"
+                    style={{
+                      backgroundImage: `url(${generatedImages[selectedImageIndex]})`,
+                      backgroundSize: 'contain',
+                      backgroundPosition: 'center',
+                      backgroundRepeat: 'no-repeat'
+                    }}
+                    onMouseDown={startDrawing}
+                    onMouseMove={draw}
+                    onMouseUp={stopDrawing}
+                    onMouseLeave={stopDrawing}
+                  />
+                  <div className="flex gap-2">
+                    <Button 
+                      onClick={() => {
+                        setIsRemovalMode(false);
+                        setCircledArea([]);
+                      }}
+                      variant="outline"
+                      className="flex-1"
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      onClick={clearCanvas}
+                      variant="outline"
+                      className="flex-1"
+                    >
+                      Clear
+                    </Button>
+                    <Button 
+                      onClick={handleSmartRemove} 
+                      disabled={isProcessing || circledArea.length === 0}
+                      className="flex-1"
+                    >
+                      {isProcessing ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <Eraser className="mr-2 h-4 w-4" />
+                          Remove Circled Area
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <img
+                    src={generatedImages[selectedImageIndex]}
+                    alt={`Generated ${selectedImageIndex + 1}`}
+                    className="w-full h-auto rounded-lg"
+                  />
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-black/80 p-4 rounded-lg">
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleUpscale(generatedImages[selectedImageIndex]);
+                      }}
+                      disabled={isProcessing}
+                      size="lg"
+                      variant="secondary"
+                      className="gap-2"
+                    >
+                      {isProcessing ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <Sparkles className="h-5 w-5" />
+                      )}
+                      Upscale
+                    </Button>
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSmartRemoveClick();
+                      }}
+                      disabled={isProcessing}
+                      size="lg"
+                      variant="secondary"
+                      className="gap-2"
+                    >
+                      <Eraser className="h-5 w-5" />
+                      Smart Remove
+                    </Button>
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDownload(generatedImages[selectedImageIndex], selectedImageIndex);
+                      }}
+                      size="lg"
+                      variant="secondary"
+                      className="gap-2"
+                    >
+                      <Download className="h-5 w-5" />
+                      Download
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
           )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Smart Removal Canvas Dialog */}
-      <Dialog open={showRemovalCanvas} onOpenChange={setShowRemovalCanvas}>
-        <DialogContent className="max-w-4xl">
-          <DialogHeader>
-            <DialogTitle>Circle the area to remove</DialogTitle>
-            <DialogDescription>
-              Draw a circle around the object you want to remove from the image
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            {selectedImageIndex !== null && (
-              <div className="relative">
-                <canvas
-                  ref={setCanvasRef}
-                  width={1024}
-                  height={1024}
-                  className="w-full border border-border rounded-lg cursor-crosshair"
-                  style={{
-                    backgroundImage: `url(${generatedImages[selectedImageIndex]})`,
-                    backgroundSize: 'contain',
-                    backgroundPosition: 'center',
-                    backgroundRepeat: 'no-repeat'
-                  }}
-                  onMouseDown={startDrawing}
-                  onMouseMove={draw}
-                  onMouseUp={stopDrawing}
-                  onMouseLeave={stopDrawing}
-                />
-              </div>
-            )}
-            <div className="flex gap-2">
-              <Button 
-                onClick={clearCanvas}
-                variant="outline"
-                className="flex-1"
-              >
-                Clear
-              </Button>
-              <Button 
-                onClick={handleSmartRemove} 
-                disabled={isProcessing || circledArea.length === 0}
-                className="flex-1"
-              >
-                {isProcessing ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <Eraser className="mr-2 h-4 w-4" />
-                    Remove Circled Area
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
         </DialogContent>
       </Dialog>
     </div>

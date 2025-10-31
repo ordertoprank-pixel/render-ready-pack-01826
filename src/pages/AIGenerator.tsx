@@ -296,13 +296,32 @@ const AIGenerator = () => {
     reader.readAsDataURL(file);
   };
 
-  const handleReferenceImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleReferenceImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onloadend = () => {
-      setReferenceImage(reader.result as string);
+    reader.onloadend = async () => {
+      const imageData = reader.result as string;
+      setReferenceImage(imageData);
+      
+      // Automatically analyze the image and fill the prompt
+      try {
+        toast.info("Analyzing image...");
+        const { data, error } = await supabase.functions.invoke("analyze-image", {
+          body: { imageUrl: imageData },
+        });
+
+        if (error) throw error;
+
+        if (data?.description) {
+          setPrompt(data.description);
+          toast.success("Image analyzed! Prompt generated.");
+        }
+      } catch (error) {
+        console.error("Error analyzing image:", error);
+        toast.error("Failed to analyze image. You can still enter a prompt manually.");
+      }
     };
     reader.readAsDataURL(file);
   };

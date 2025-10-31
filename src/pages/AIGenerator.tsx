@@ -26,6 +26,8 @@ const AIGenerator = () => {
   const [canvasRef, setCanvasRef] = useState<HTMLCanvasElement | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [circledArea, setCircledArea] = useState<{x: number, y: number}[]>([]);
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [isRedesigning, setIsRedesigning] = useState(false);
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
@@ -237,6 +239,47 @@ const AIGenerator = () => {
     setCircledArea([]);
   };
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setUploadedImage(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRedesign = async () => {
+    if (!uploadedImage) {
+      toast.error("Please upload an image first");
+      return;
+    }
+
+    setIsRedesigning(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("edit-image", {
+        body: { 
+          imageUrl: uploadedImage, 
+          prompt: "Completely redesign and reimagine this image with a creative, artistic interpretation. Transform it into a stunning piece of art with enhanced colors, composition, and style while maintaining the core subject matter."
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.image) {
+        setGeneratedImages((prev) => [data.image, ...prev]);
+        toast.success("Image redesigned successfully!");
+        setUploadedImage(null);
+      }
+    } catch (error) {
+      console.error("Error redesigning image:", error);
+      toast.error("Failed to redesign image. Please try again.");
+    } finally {
+      setIsRedesigning(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Mesh Gradient Background */}
@@ -287,6 +330,47 @@ const AIGenerator = () => {
                 </>
               )}
             </Button>
+          </div>
+
+          {/* Upload & Redesign Form */}
+          <div className="bg-card/50 backdrop-blur-sm border border-border rounded-xl p-6 space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="image-upload">Upload image to redesign</Label>
+              <Input
+                id="image-upload"
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="h-12"
+              />
+            </div>
+            {uploadedImage && (
+              <div className="space-y-4">
+                <img
+                  src={uploadedImage}
+                  alt="Uploaded preview"
+                  className="w-full h-auto rounded-lg border border-border"
+                />
+                <Button 
+                  onClick={handleRedesign} 
+                  disabled={isRedesigning}
+                  className="w-full h-12"
+                  size="lg"
+                >
+                  {isRedesigning ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      Redesigning...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="mr-2 h-5 w-5" />
+                      Redesign with AI
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* Generated Images Grid */}

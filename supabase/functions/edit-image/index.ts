@@ -81,24 +81,24 @@ serve(async (req) => {
     console.log('AI API response received');
     console.log('Response structure:', JSON.stringify(data, null, 2));
 
-    // Try multiple possible response structures
-    let editedImageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-    
-    // If not in the expected location, try alternative structure
-    if (!editedImageUrl && data.choices?.[0]?.message?.content) {
-      console.log('Trying alternative response structure');
-      editedImageUrl = data.choices[0].message.content;
-    }
-    
-    // Check if image is directly in data
-    if (!editedImageUrl && data.image) {
-      console.log('Image found in data.image');
+    // Try primary response structure first
+    let editedImageUrl: string | undefined = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+
+    // Fallback: some providers may put the base64 at top-level `image`
+    if (!editedImageUrl && typeof data.image === 'string') {
       editedImageUrl = data.image;
     }
-    
-    if (!editedImageUrl) {
-      console.error('Failed to extract image from response:', JSON.stringify(data));
-      throw new Error('No edited image generated - response structure unexpected');
+
+    // Validate we actually have an image URL/data
+    const isValidImage = typeof editedImageUrl === 'string' &&
+      (editedImageUrl.startsWith('data:image/') || editedImageUrl.startsWith('http'));
+
+    if (!isValidImage) {
+      console.error('Failed to extract image from response (invalid format):', JSON.stringify(data));
+      return new Response(
+        JSON.stringify({ error: 'AI did not return an image. Please try again with a different prompt.' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     console.log('Successfully extracted edited image');

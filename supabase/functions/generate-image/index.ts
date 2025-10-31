@@ -69,10 +69,20 @@ serve(async (req) => {
     const data = await response.json();
     console.log('AI API response received');
 
-    const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-    
-    if (!imageUrl) {
-      throw new Error('No image generated');
+    let imageUrl: string | undefined = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    if (!imageUrl && typeof data.image === 'string') {
+      imageUrl = data.image;
+    }
+
+    const isValidImage = typeof imageUrl === 'string' &&
+      (imageUrl.startsWith('data:image/') || imageUrl.startsWith('http'));
+
+    if (!isValidImage) {
+      console.error('No valid image returned:', JSON.stringify(data));
+      return new Response(
+        JSON.stringify({ error: 'AI did not return an image. Please try a different prompt.' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     return new Response(

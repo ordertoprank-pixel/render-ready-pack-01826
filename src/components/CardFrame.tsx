@@ -16,6 +16,7 @@ export const CardFrame = ({
   rotation = 0 
 }: CardFrameProps) => {
   const [position, setPosition] = useState({ x: initialX, y: initialY });
+  const [scale, setScale] = useState(1);
   const [isDragging, setIsDragging] = useState(false);
   const dragStart = useRef({ x: 0, y: 0 });
   const cardRef = useRef<HTMLDivElement>(null);
@@ -56,6 +57,12 @@ export const CardFrame = ({
     e.preventDefault();
   };
 
+  const handleWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    const delta = e.deltaY * -0.001;
+    setScale(prev => Math.max(0.5, Math.min(3, prev + delta)));
+  };
+
   return (
     <div 
       ref={cardRef}
@@ -64,6 +71,7 @@ export const CardFrame = ({
         transform: `translate(${position.x}px, ${position.y}px) rotate(${rotation}deg)`,
       }}
       onMouseDown={handleMouseDown}
+      onWheel={handleWheel}
     >
       {/* White border frame with enhanced shadow */}
       <div 
@@ -79,7 +87,10 @@ export const CardFrame = ({
           <img 
             src={designImage} 
             alt="Uploaded design" 
-            className="w-full h-full object-contain"
+            className="w-full h-full object-contain transition-transform"
+            style={{
+              transform: `scale(${scale})`,
+            }}
           />
         ) : null}
       </div>

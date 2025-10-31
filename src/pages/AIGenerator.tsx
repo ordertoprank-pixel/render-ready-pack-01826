@@ -433,7 +433,7 @@ const AIGenerator = () => {
         setTextToAdd("");
         setCircledArea([]);
       }}>
-        <DialogContent className="max-w-6xl p-0">
+        <DialogContent className="max-w-7xl max-h-[95vh] p-0 overflow-hidden">
           <VisuallyHidden>
             <DialogTitle>Image Preview</DialogTitle>
             <DialogDescription>View and edit your generated image</DialogDescription>
@@ -551,13 +551,15 @@ const AIGenerator = () => {
                   </div>
                 </div>
               ) : (
-                <>
-                  <img
-                    src={generatedImages[selectedImageIndex]}
-                    alt={`Generated ${selectedImageIndex + 1}`}
-                    className="w-full h-auto rounded-lg"
-                  />
-                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-black/80 p-4 rounded-lg">
+                <div className="relative flex flex-col h-full">
+                  <div className="flex-1 flex items-center justify-center p-4 bg-black/80">
+                    <img
+                      src={generatedImages[selectedImageIndex]}
+                      alt={`Generated ${selectedImageIndex + 1}`}
+                      className="max-w-full max-h-[80vh] w-auto h-auto object-contain rounded-lg"
+                    />
+                  </div>
+                  <div className="flex gap-2 p-4 bg-black/90 border-t border-border justify-center flex-wrap">
                     <Button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -565,7 +567,6 @@ const AIGenerator = () => {
                       }}
                       disabled={isProcessing}
                       size="lg"
-                      variant="secondary"
                       className="gap-2"
                     >
                       {isProcessing ? (
@@ -582,7 +583,6 @@ const AIGenerator = () => {
                       }}
                       disabled={isProcessing}
                       size="lg"
-                      variant="secondary"
                       className="gap-2"
                     >
                       <Eraser className="h-5 w-5" />
@@ -595,7 +595,6 @@ const AIGenerator = () => {
                       }}
                       disabled={isProcessing}
                       size="lg"
-                      variant="secondary"
                       className="gap-2"
                     >
                       <Type className="h-5 w-5" />
@@ -607,14 +606,13 @@ const AIGenerator = () => {
                         handleDownload(generatedImages[selectedImageIndex], selectedImageIndex);
                       }}
                       size="lg"
-                      variant="secondary"
                       className="gap-2"
                     >
                       <Download className="h-5 w-5" />
                       Download
                     </Button>
                   </div>
-                </>
+                </div>
               )}
             </div>
           )}

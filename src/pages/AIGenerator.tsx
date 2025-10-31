@@ -2,14 +2,25 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Wand2 } from "lucide-react";
+import { Loader2, Wand2, Sparkles, Eraser, Download } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const AIGenerator = () => {
   const [prompt, setPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [removalPrompt, setRemovalPrompt] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [showRemovalDialog, setShowRemovalDialog] = useState(false);
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
@@ -34,6 +45,81 @@ const AIGenerator = () => {
       toast.error("Failed to generate image. Please try again.");
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleUpscale = async (imageUrl: string) => {
+    setIsProcessing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("edit-image", {
+        body: { 
+          imageUrl, 
+          prompt: "Upscale this image to ultra high quality, enhance details, improve sharpness and clarity"
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.image) {
+        setGeneratedImages((prev) => [data.image, ...prev]);
+        toast.success("Image upscaled successfully!");
+      }
+    } catch (error) {
+      console.error("Error upscaling image:", error);
+      toast.error("Failed to upscale image. Please try again.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleSmartRemove = async () => {
+    if (!selectedImage || !removalPrompt.trim()) {
+      toast.error("Please enter what you want to remove");
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("edit-image", {
+        body: { 
+          imageUrl: selectedImage, 
+          prompt: `Remove ${removalPrompt} from this image, fill in the background naturally and seamlessly`
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.image) {
+        setGeneratedImages((prev) => [data.image, ...prev]);
+        toast.success("Image edited successfully!");
+        setShowRemovalDialog(false);
+        setRemovalPrompt("");
+        setSelectedImage(null);
+      }
+    } catch (error) {
+      console.error("Error editing image:", error);
+      toast.error("Failed to edit image. Please try again.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleDownload = async (imageUrl: string, index: number) => {
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `generated-image-${index + 1}.png`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success("Image downloaded!");
+    } catch (error) {
+      console.error("Error downloading image:", error);
+      toast.error("Failed to download image");
     }
   };
 
@@ -104,7 +190,46 @@ const AIGenerator = () => {
                       alt={`Generated ${index + 1}`}
                       className="w-full h-auto"
                     />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/60 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => handleUpscale(image)}
+                          disabled={isProcessing}
+                          size="sm"
+                          variant="secondary"
+                          className="gap-2"
+                        >
+                          {isProcessing ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Sparkles className="h-4 w-4" />
+                          )}
+                          Upscale
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            setSelectedImage(image);
+                            setShowRemovalDialog(true);
+                          }}
+                          disabled={isProcessing}
+                          size="sm"
+                          variant="secondary"
+                          className="gap-2"
+                        >
+                          <Eraser className="h-4 w-4" />
+                          Remove
+                        </Button>
+                        <Button
+                          onClick={() => handleDownload(image, index)}
+                          size="sm"
+                          variant="secondary"
+                          className="gap-2"
+                        >
+                          <Download className="h-4 w-4" />
+                          Download
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -112,6 +237,47 @@ const AIGenerator = () => {
           )}
         </div>
       </main>
+
+      {/* Smart Removal Dialog */}
+      <Dialog open={showRemovalDialog} onOpenChange={setShowRemovalDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Smart Remove</DialogTitle>
+            <DialogDescription>
+              Describe what you want to remove from the image
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="removal">What to remove</Label>
+              <Input
+                id="removal"
+                placeholder="e.g., the person, the watermark, the background object..."
+                value={removalPrompt}
+                onChange={(e) => setRemovalPrompt(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && !isProcessing && handleSmartRemove()}
+              />
+            </div>
+            <Button 
+              onClick={handleSmartRemove} 
+              disabled={isProcessing || !removalPrompt.trim()}
+              className="w-full"
+            >
+              {isProcessing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <Eraser className="mr-2 h-4 w-4" />
+                  Remove
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

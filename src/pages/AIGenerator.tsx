@@ -251,62 +251,14 @@ const AIGenerator = () => {
                 {generatedImages.map((image, index) => (
                   <div
                     key={index}
-                    className="relative rounded-xl overflow-hidden border border-border bg-card/30 backdrop-blur-sm cursor-pointer"
-                    onClick={() => setSelectedImageIndex(selectedImageIndex === index ? null : index)}
+                    className="relative rounded-xl overflow-hidden border border-border bg-card/30 backdrop-blur-sm cursor-pointer hover:shadow-lg transition-shadow"
+                    onClick={() => setSelectedImageIndex(index)}
                   >
                     <img
                       src={image}
                       alt={`Generated ${index + 1}`}
                       className="w-full h-auto"
                     />
-                    {selectedImageIndex === index && (
-                      <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                        <div className="flex gap-2">
-                          <Button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleUpscale(image);
-                            }}
-                            disabled={isProcessing}
-                            size="sm"
-                            variant="secondary"
-                            className="gap-2"
-                          >
-                            {isProcessing ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Sparkles className="h-4 w-4" />
-                            )}
-                            Upscale
-                          </Button>
-                          <Button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleSmartRemoveClick();
-                            }}
-                            disabled={isProcessing}
-                            size="sm"
-                            variant="secondary"
-                            className="gap-2"
-                          >
-                            <Eraser className="h-4 w-4" />
-                            Remove
-                          </Button>
-                          <Button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDownload(image, index);
-                            }}
-                            size="sm"
-                            variant="secondary"
-                            className="gap-2"
-                          >
-                            <Download className="h-4 w-4" />
-                            Download
-                          </Button>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 ))}
               </div>
@@ -314,6 +266,65 @@ const AIGenerator = () => {
           )}
         </div>
       </main>
+
+      {/* Image Preview Dialog */}
+      <Dialog open={selectedImageIndex !== null} onOpenChange={() => setSelectedImageIndex(null)}>
+        <DialogContent className="max-w-6xl p-0">
+          {selectedImageIndex !== null && (
+            <div className="relative">
+              <img
+                src={generatedImages[selectedImageIndex]}
+                alt={`Generated ${selectedImageIndex + 1}`}
+                className="w-full h-auto rounded-lg"
+              />
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-black/80 p-4 rounded-lg">
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleUpscale(generatedImages[selectedImageIndex]);
+                  }}
+                  disabled={isProcessing}
+                  size="lg"
+                  variant="secondary"
+                  className="gap-2"
+                >
+                  {isProcessing ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-5 w-5" />
+                  )}
+                  Upscale
+                </Button>
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSmartRemoveClick();
+                  }}
+                  disabled={isProcessing}
+                  size="lg"
+                  variant="secondary"
+                  className="gap-2"
+                >
+                  <Eraser className="h-5 w-5" />
+                  Smart Remove
+                </Button>
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDownload(generatedImages[selectedImageIndex], selectedImageIndex);
+                  }}
+                  size="lg"
+                  variant="secondary"
+                  className="gap-2"
+                >
+                  <Download className="h-5 w-5" />
+                  Download
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Smart Removal Canvas Dialog */}
       <Dialog open={showRemovalCanvas} onOpenChange={setShowRemovalCanvas}>

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Wand2, Sparkles, Eraser, Download } from "lucide-react";
+import { Loader2, Wand2, Sparkles, Eraser, Download, Type } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -21,6 +21,8 @@ const AIGenerator = () => {
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isRemovalMode, setIsRemovalMode] = useState(false);
+  const [isTextMode, setIsTextMode] = useState(false);
+  const [textToAdd, setTextToAdd] = useState("");
   const [canvasRef, setCanvasRef] = useState<HTMLCanvasElement | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [circledArea, setCircledArea] = useState<{x: number, y: number}[]>([]);
@@ -78,6 +80,44 @@ const AIGenerator = () => {
 
   const handleSmartRemoveClick = () => {
     setIsRemovalMode(true);
+  };
+
+  const handleAddTextClick = () => {
+    setIsTextMode(true);
+  };
+
+  const handleAddText = async () => {
+    if (selectedImageIndex === null || !textToAdd.trim()) {
+      toast.error("Please enter text to add");
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const selectedImage = generatedImages[selectedImageIndex];
+
+      const { data, error } = await supabase.functions.invoke("edit-image", {
+        body: { 
+          imageUrl: selectedImage, 
+          prompt: `Add the text "${textToAdd}" to this image with a beautiful typography style that perfectly matches the image aesthetic, color scheme, and mood. Make the text prominent, readable, and professionally designed.`
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.image) {
+        setGeneratedImages((prev) => [data.image, ...prev]);
+        toast.success("Text added successfully!");
+        setIsTextMode(false);
+        setTextToAdd("");
+        setSelectedImageIndex(null);
+      }
+    } catch (error) {
+      console.error("Error adding text:", error);
+      toast.error("Failed to add text. Please try again.");
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handleSmartRemove = async () => {
@@ -277,6 +317,8 @@ const AIGenerator = () => {
       <Dialog open={selectedImageIndex !== null} onOpenChange={() => {
         setSelectedImageIndex(null);
         setIsRemovalMode(false);
+        setIsTextMode(false);
+        setTextToAdd("");
         setCircledArea([]);
       }}>
         <DialogContent className="max-w-6xl p-0">
@@ -345,6 +387,57 @@ const AIGenerator = () => {
                     </Button>
                   </div>
                 </div>
+              ) : isTextMode ? (
+                <div className="p-6 space-y-4">
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">Add text to image</h3>
+                    <p className="text-sm text-muted-foreground">Enter the text you want to add - AI will style it perfectly for your image</p>
+                  </div>
+                  <img
+                    src={generatedImages[selectedImageIndex]}
+                    alt={`Preview ${selectedImageIndex + 1}`}
+                    className="w-full h-auto rounded-lg border border-border"
+                  />
+                  <div className="space-y-2">
+                    <Label htmlFor="text-input">Text to add</Label>
+                    <Input
+                      id="text-input"
+                      placeholder="Enter your text..."
+                      value={textToAdd}
+                      onChange={(e) => setTextToAdd(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && !isProcessing && handleAddText()}
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button 
+                      onClick={() => {
+                        setIsTextMode(false);
+                        setTextToAdd("");
+                      }}
+                      variant="outline"
+                      className="flex-1"
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      onClick={handleAddText} 
+                      disabled={isProcessing || !textToAdd.trim()}
+                      className="flex-1"
+                    >
+                      {isProcessing ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Adding Text...
+                        </>
+                      ) : (
+                        <>
+                          <Type className="mr-2 h-4 w-4" />
+                          Add Text
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
               ) : (
                 <>
                   <img
@@ -382,6 +475,19 @@ const AIGenerator = () => {
                     >
                       <Eraser className="h-5 w-5" />
                       Smart Remove
+                    </Button>
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAddTextClick();
+                      }}
+                      disabled={isProcessing}
+                      size="lg"
+                      variant="secondary"
+                      className="gap-2"
+                    >
+                      <Type className="h-5 w-5" />
+                      Add Text
                     </Button>
                     <Button
                       onClick={(e) => {

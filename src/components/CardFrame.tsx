@@ -6,6 +6,7 @@ interface CardFrameProps {
   initialX?: number;
   initialY?: number;
   rotation?: number;
+  pouchColor?: string;
 }
 
 type ResizeHandle = 'nw' | 'ne' | 'sw' | 'se' | 'n' | 's' | 'e' | 'w' | null;
@@ -15,7 +16,8 @@ export const CardFrame = ({
   className = "", 
   initialX = 0, 
   initialY = 0, 
-  rotation = 0 
+  rotation = 0,
+  pouchColor = "#ffffff"
 }: CardFrameProps) => {
   const [position, setPosition] = useState({ x: initialX, y: initialY });
   const [scale, setScale] = useState({ x: 1, y: 1 });
@@ -136,10 +138,11 @@ export const CardFrame = ({
       onMouseEnter={() => setShowHandles(true)}
       onMouseLeave={() => !resizingHandle && setShowHandles(false)}
     >
-      {/* White border frame with enhanced shadow */}
+      {/* Card frame with enhanced shadow */}
       <div 
-        className="absolute inset-0 bg-white rounded-[2rem]" 
+        className="absolute inset-0 rounded-[2rem]" 
         style={{ 
+          backgroundColor: pouchColor,
           boxShadow: '0 30px 80px -20px rgba(0, 0, 0, 0.4), 0 15px 40px -15px rgba(0, 0, 0, 0.3), 0 5px 15px -5px rgba(0, 0, 0, 0.2)' 
         }} 
       />

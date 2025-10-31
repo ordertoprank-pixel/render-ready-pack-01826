@@ -19,6 +19,7 @@ export const MockupViewer = ({ designImage, backgroundColor, pouchColor }: Mocku
           designImage={designImage}
           className="w-[52%] aspect-[3/4] bottom-[15%] right-[8%]"
           rotation={12}
+          pouchColor={pouchColor}
         />
         
         {/* Front card - positioned top left, slightly rotated opposite */}
@@ -26,6 +27,7 @@ export const MockupViewer = ({ designImage, backgroundColor, pouchColor }: Mocku
           designImage={designImage}
           className="w-[52%] aspect-[3/4] top-[2%] left-[22%]"
           rotation={-6}
+          pouchColor={pouchColor}
         />
       </div>
     </div>

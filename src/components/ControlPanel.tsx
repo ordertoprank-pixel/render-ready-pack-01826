@@ -8,6 +8,10 @@ interface ControlPanelProps {
   onImageUpload: (imageUrl: string) => void;
   backgroundColor: string;
   onBackgroundColorChange: (color: string) => void;
+  backgroundImage: string | null;
+  onBackgroundImageUpload: (imageUrl: string | null) => void;
+  backgroundBlur: number;
+  onBackgroundBlurChange: (blur: number) => void;
   pouchColor: string;
   onPouchColorChange: (color: string) => void;
   onExport: () => void;
@@ -17,11 +21,16 @@ export const ControlPanel = ({
   onImageUpload,
   backgroundColor,
   onBackgroundColorChange,
+  backgroundImage,
+  onBackgroundImageUpload,
+  backgroundBlur,
+  onBackgroundBlurChange,
   pouchColor,
   onPouchColorChange,
   onExport,
 }: ControlPanelProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const backgroundFileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -36,6 +45,24 @@ export const ControlPanel = ({
         const result = event.target?.result as string;
         onImageUpload(result);
         toast.success("Design uploaded successfully!");
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleBackgroundFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("File size must be less than 5MB");
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const result = event.target?.result as string;
+        onBackgroundImageUpload(result);
+        toast.success("Background image uploaded!");
       };
       reader.readAsDataURL(file);
     }
@@ -104,15 +131,59 @@ export const ControlPanel = ({
           {backgroundColors.map((color) => (
             <button
               key={color.name}
-              onClick={() => onBackgroundColorChange(color.value)}
+              onClick={() => {
+                onBackgroundColorChange(color.value);
+                onBackgroundImageUpload(null);
+              }}
               className="aspect-square rounded-lg border-2 transition-all hover:scale-110"
               style={{
                 backgroundColor: color.value,
-                borderColor: backgroundColor === color.value ? "hsl(var(--primary))" : "transparent",
+                borderColor: backgroundColor === color.value && !backgroundImage ? "hsl(var(--primary))" : "transparent",
               }}
               title={color.name}
             />
           ))}
+        </div>
+        
+        <div className="space-y-2">
+          <input
+            ref={backgroundFileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleBackgroundFileChange}
+            className="hidden"
+          />
+          <Button
+            onClick={() => backgroundFileInputRef.current?.click()}
+            variant="outline"
+            className="w-full"
+          >
+            <Upload className="w-4 h-4 mr-2" />
+            {backgroundImage ? "Change Background Image" : "Upload Background Image"}
+          </Button>
+          {backgroundImage && (
+            <>
+              <Button
+                onClick={() => onBackgroundImageUpload(null)}
+                variant="outline"
+                className="w-full"
+                size="sm"
+              >
+                Remove Background Image
+              </Button>
+              <div className="space-y-2">
+                <Label className="text-sm">Blur: {backgroundBlur}px</Label>
+                <input
+                  type="range"
+                  min="0"
+                  max="20"
+                  value={backgroundBlur}
+                  onChange={(e) => onBackgroundBlurChange(Number(e.target.value))}
+                  className="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary"
+                />
+              </div>
+            </>
+          )}
         </div>
       </div>
 

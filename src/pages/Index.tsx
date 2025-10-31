@@ -7,6 +7,8 @@ import { toast } from "sonner";
 const Index = () => {
   const [designImage, setDesignImage] = useState<string | null>(null);
   const [backgroundColor, setBackgroundColor] = useState("#f8fafc");
+  const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
+  const [backgroundBlur, setBackgroundBlur] = useState(0);
   const [pouchColor, setPouchColor] = useState("#e2e8f0");
 
   const handleExport = () => {
@@ -45,6 +47,8 @@ const Index = () => {
               <MockupViewer
                 designImage={designImage}
                 backgroundColor={backgroundColor}
+                backgroundImage={backgroundImage}
+                backgroundBlur={backgroundBlur}
                 pouchColor={pouchColor}
               />
             </div>
@@ -55,6 +59,10 @@ const Index = () => {
             onImageUpload={setDesignImage}
             backgroundColor={backgroundColor}
             onBackgroundColorChange={setBackgroundColor}
+            backgroundImage={backgroundImage}
+            onBackgroundImageUpload={setBackgroundImage}
+            backgroundBlur={backgroundBlur}
+            onBackgroundBlurChange={setBackgroundBlur}
             pouchColor={pouchColor}
             onPouchColorChange={setPouchColor}
             onExport={handleExport}

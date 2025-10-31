@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 interface ControlPanelProps {
   onImageUpload: (imageUrl: string) => void;
+  onBackImageUpload: (imageUrl: string) => void;
   backgroundColor: string;
   onBackgroundColorChange: (color: string) => void;
   backgroundImage: string | null;
@@ -19,6 +20,7 @@ interface ControlPanelProps {
 
 export const ControlPanel = ({
   onImageUpload,
+  onBackImageUpload,
   backgroundColor,
   onBackgroundColorChange,
   backgroundImage,
@@ -30,6 +32,7 @@ export const ControlPanel = ({
   onExport,
 }: ControlPanelProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const backFileInputRef = useRef<HTMLInputElement>(null);
   const backgroundFileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -44,7 +47,25 @@ export const ControlPanel = ({
       reader.onload = (event) => {
         const result = event.target?.result as string;
         onImageUpload(result);
-        toast.success("Design uploaded successfully!");
+        toast.success("Front design uploaded successfully!");
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleBackFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("File size must be less than 5MB");
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const result = event.target?.result as string;
+        onBackImageUpload(result);
+        toast.success("Back design uploaded successfully!");
       };
       reader.readAsDataURL(file);
     }
@@ -100,7 +121,7 @@ export const ControlPanel = ({
       <div className="space-y-3">
         <Label className="text-base font-semibold flex items-center gap-2">
           <Upload className="w-4 h-4" />
-          Upload Design
+          Upload Front Design
         </Label>
         <input
           ref={fileInputRef}
@@ -114,7 +135,32 @@ export const ControlPanel = ({
           variant="outline"
           className="w-full"
         >
-          Choose Image
+          Choose Front Image
+        </Button>
+        <p className="text-xs text-muted-foreground">
+          PNG, JPG up to 5MB
+        </p>
+      </div>
+
+      {/* Upload Back Design */}
+      <div className="space-y-3">
+        <Label className="text-base font-semibold flex items-center gap-2">
+          <Upload className="w-4 h-4" />
+          Upload Back Design
+        </Label>
+        <input
+          ref={backFileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleBackFileChange}
+          className="hidden"
+        />
+        <Button
+          onClick={() => backFileInputRef.current?.click()}
+          variant="outline"
+          className="w-full"
+        >
+          Choose Back Image
         </Button>
         <p className="text-xs text-muted-foreground">
           PNG, JPG up to 5MB

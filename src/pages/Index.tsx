@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 const Index = () => {
   const [designImage, setDesignImage] = useState<string | null>(null);
+  const [backDesignImage, setBackDesignImage] = useState<string | null>(null);
   const [backgroundColor, setBackgroundColor] = useState("#f8fafc");
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
   const [backgroundBlur, setBackgroundBlur] = useState(0);
@@ -46,6 +47,7 @@ const Index = () => {
             <div className="aspect-[4/3] lg:aspect-auto lg:h-[calc(100vh-12rem)] rounded-xl overflow-hidden border border-border shadow-2xl">
               <MockupViewer
                 designImage={designImage}
+                backDesignImage={backDesignImage}
                 backgroundColor={backgroundColor}
                 backgroundImage={backgroundImage}
                 backgroundBlur={backgroundBlur}
@@ -57,6 +59,7 @@ const Index = () => {
           {/* Controls */}
           <ControlPanel
             onImageUpload={setDesignImage}
+            onBackImageUpload={setBackDesignImage}
             backgroundColor={backgroundColor}
             onBackgroundColorChange={setBackgroundColor}
             backgroundImage={backgroundImage}

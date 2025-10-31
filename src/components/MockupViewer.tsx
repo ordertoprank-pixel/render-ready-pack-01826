@@ -2,13 +2,14 @@ import { CardFrame } from "./CardFrame";
 
 interface MockupViewerProps {
   designImage: string | null;
+  backDesignImage: string | null;
   backgroundColor: string;
   backgroundImage: string | null;
   backgroundBlur: number;
   pouchColor: string;
 }
 
-export const MockupViewer = ({ designImage, backgroundColor, backgroundImage, backgroundBlur, pouchColor }: MockupViewerProps) => {
+export const MockupViewer = ({ designImage, backDesignImage, backgroundColor, backgroundImage, backgroundBlur, pouchColor }: MockupViewerProps) => {
   return (
     <div 
       className="w-full h-full rounded-xl overflow-hidden flex items-center justify-center relative" 
@@ -29,7 +30,7 @@ export const MockupViewer = ({ designImage, backgroundColor, backgroundImage, ba
       <div className="relative w-full max-w-3xl aspect-square px-12 py-8">
         {/* Back card - positioned bottom right, slightly rotated */}
         <CardFrame 
-          designImage={designImage}
+          designImage={backDesignImage}
           className="w-[52%] aspect-[3/4] bottom-[15%] right-[8%]"
           rotation={12}
           pouchColor={pouchColor}

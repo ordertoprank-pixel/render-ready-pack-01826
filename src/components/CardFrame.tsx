@@ -234,25 +234,27 @@ export const CardFrame = ({
                   />
                 </div>
                 
-                {/* Rotation Handle */}
-                <div 
-                  className="absolute -top-12 left-1/2 -translate-x-1/2 pointer-events-auto z-10"
-                  onMouseEnter={() => setShowHandles(true)}
-                >
-                  <div className="relative">
-                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0.5 h-8 bg-accent" />
-                    <div 
-                      className="relative w-5 h-5 bg-accent border-2 border-white rounded-full cursor-grab shadow-lg"
-                      onMouseDown={handleRotateStart}
-                      title="Drag to rotate"
-                    />
-                  </div>
-                </div>
               </>
             )}
           </>
         ) : null}
       </div>
+
+      {showHandles && (
+        <div 
+          className="absolute -top-12 left-1/2 -translate-x-1/2 pointer-events-auto z-20"
+          onMouseEnter={() => setShowHandles(true)}
+        >
+          <div className="relative">
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0.5 h-8 bg-accent" />
+            <div 
+              className="relative w-5 h-5 bg-accent border-2 border-white rounded-full cursor-grab shadow-lg"
+              onMouseDown={handleRotateStart}
+              title="Drag to rotate"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

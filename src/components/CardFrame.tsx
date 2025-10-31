@@ -16,15 +16,18 @@ export const CardFrame = ({
   className = "", 
   initialX = 0, 
   initialY = 0, 
-  rotation = 0,
+  rotation: initialRotation = 0,
   pouchColor = "#ffffff"
 }: CardFrameProps) => {
   const [position, setPosition] = useState({ x: initialX, y: initialY });
+  const [rotation, setRotation] = useState(initialRotation);
   const [scale, setScale] = useState({ x: 1, y: 1 });
   const [isDragging, setIsDragging] = useState(false);
+  const [isRotating, setIsRotating] = useState(false);
   const [resizingHandle, setResizingHandle] = useState<ResizeHandle>(null);
   const [showHandles, setShowHandles] = useState(false);
   const dragStart = useRef({ x: 0, y: 0 });
+  const rotationStart = useRef({ rotation: 0, angle: 0 });
   const resizeStart = useRef({ scale: { x: 1, y: 1 }, mouse: { x: 0, y: 0 } });
   const cardRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLDivElement>(null);
@@ -41,6 +44,15 @@ export const CardFrame = ({
         }));
         
         dragStart.current = { x: e.clientX, y: e.clientY };
+      } else if (isRotating && cardRef.current) {
+        const rect = cardRef.current.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        
+        const angle = Math.atan2(e.clientY - centerY, e.clientX - centerX) * (180 / Math.PI);
+        const deltaAngle = angle - rotationStart.current.angle;
+        
+        setRotation(rotationStart.current.rotation + deltaAngle);
       } else if (resizingHandle) {
         const dx = e.clientX - resizeStart.current.mouse.x;
         const dy = e.clientY - resizeStart.current.mouse.y;
@@ -88,10 +100,11 @@ export const CardFrame = ({
 
     const handleMouseUp = () => {
       setIsDragging(false);
+      setIsRotating(false);
       setResizingHandle(null);
     };
 
-    if (isDragging || resizingHandle) {
+    if (isDragging || isRotating || resizingHandle) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
     }
@@ -100,12 +113,29 @@ export const CardFrame = ({
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, resizingHandle]);
+  }, [isDragging, isRotating, resizingHandle]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true);
     dragStart.current = { x: e.clientX, y: e.clientY };
     e.preventDefault();
+  };
+
+  const handleRotateStart = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsRotating(true);
+    
+    if (cardRef.current) {
+      const rect = cardRef.current.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      const angle = Math.atan2(e.clientY - centerY, e.clientX - centerX) * (180 / Math.PI);
+      
+      rotationStart.current = {
+        rotation: rotation,
+        angle: angle
+      };
+    }
   };
 
   const handleResizeStart = (e: React.MouseEvent, handle: ResizeHandle) => {
@@ -165,43 +195,54 @@ export const CardFrame = ({
             
             {/* Resize Handles */}
             {showHandles && (
-              <div className="absolute inset-0 pointer-events-none">
-                {/* Corner Handles */}
-                <div 
-                  className="absolute -top-1 -left-1 w-3 h-3 bg-primary border-2 border-white rounded-full cursor-nw-resize pointer-events-auto z-10"
-                  onMouseDown={(e) => handleResizeStart(e, 'nw')}
-                />
-                <div 
-                  className="absolute -top-1 -right-1 w-3 h-3 bg-primary border-2 border-white rounded-full cursor-ne-resize pointer-events-auto z-10"
-                  onMouseDown={(e) => handleResizeStart(e, 'ne')}
-                />
-                <div 
-                  className="absolute -bottom-1 -left-1 w-3 h-3 bg-primary border-2 border-white rounded-full cursor-sw-resize pointer-events-auto z-10"
-                  onMouseDown={(e) => handleResizeStart(e, 'sw')}
-                />
-                <div 
-                  className="absolute -bottom-1 -right-1 w-3 h-3 bg-primary border-2 border-white rounded-full cursor-se-resize pointer-events-auto z-10"
-                  onMouseDown={(e) => handleResizeStart(e, 'se')}
-                />
+              <>
+                <div className="absolute inset-0 pointer-events-none">
+                  {/* Corner Handles */}
+                  <div 
+                    className="absolute -top-1 -left-1 w-3 h-3 bg-primary border-2 border-white rounded-full cursor-nw-resize pointer-events-auto z-10"
+                    onMouseDown={(e) => handleResizeStart(e, 'nw')}
+                  />
+                  <div 
+                    className="absolute -top-1 -right-1 w-3 h-3 bg-primary border-2 border-white rounded-full cursor-ne-resize pointer-events-auto z-10"
+                    onMouseDown={(e) => handleResizeStart(e, 'ne')}
+                  />
+                  <div 
+                    className="absolute -bottom-1 -left-1 w-3 h-3 bg-primary border-2 border-white rounded-full cursor-sw-resize pointer-events-auto z-10"
+                    onMouseDown={(e) => handleResizeStart(e, 'sw')}
+                  />
+                  <div 
+                    className="absolute -bottom-1 -right-1 w-3 h-3 bg-primary border-2 border-white rounded-full cursor-se-resize pointer-events-auto z-10"
+                    onMouseDown={(e) => handleResizeStart(e, 'se')}
+                  />
+                  
+                  {/* Edge Handles */}
+                  <div 
+                    className="absolute -top-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-primary border-2 border-white rounded-full cursor-n-resize pointer-events-auto z-10"
+                    onMouseDown={(e) => handleResizeStart(e, 'n')}
+                  />
+                  <div 
+                    className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-primary border-2 border-white rounded-full cursor-s-resize pointer-events-auto z-10"
+                    onMouseDown={(e) => handleResizeStart(e, 's')}
+                  />
+                  <div 
+                    className="absolute top-1/2 -translate-y-1/2 -left-1 w-3 h-3 bg-primary border-2 border-white rounded-full cursor-w-resize pointer-events-auto z-10"
+                    onMouseDown={(e) => handleResizeStart(e, 'w')}
+                  />
+                  <div 
+                    className="absolute top-1/2 -translate-y-1/2 -right-1 w-3 h-3 bg-primary border-2 border-white rounded-full cursor-e-resize pointer-events-auto z-10"
+                    onMouseDown={(e) => handleResizeStart(e, 'e')}
+                  />
+                </div>
                 
-                {/* Edge Handles */}
+                {/* Rotation Handle */}
                 <div 
-                  className="absolute -top-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-primary border-2 border-white rounded-full cursor-n-resize pointer-events-auto z-10"
-                  onMouseDown={(e) => handleResizeStart(e, 'n')}
-                />
-                <div 
-                  className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-primary border-2 border-white rounded-full cursor-s-resize pointer-events-auto z-10"
-                  onMouseDown={(e) => handleResizeStart(e, 's')}
-                />
-                <div 
-                  className="absolute top-1/2 -translate-y-1/2 -left-1 w-3 h-3 bg-primary border-2 border-white rounded-full cursor-w-resize pointer-events-auto z-10"
-                  onMouseDown={(e) => handleResizeStart(e, 'w')}
-                />
-                <div 
-                  className="absolute top-1/2 -translate-y-1/2 -right-1 w-3 h-3 bg-primary border-2 border-white rounded-full cursor-e-resize pointer-events-auto z-10"
-                  onMouseDown={(e) => handleResizeStart(e, 'e')}
-                />
-              </div>
+                  className="absolute -top-8 left-1/2 -translate-x-1/2 w-4 h-4 bg-accent border-2 border-white rounded-full cursor-grab pointer-events-auto z-10"
+                  onMouseDown={handleRotateStart}
+                  title="Drag to rotate"
+                >
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 w-0.5 h-6 bg-accent" />
+                </div>
+              </>
             )}
           </>
         ) : null}

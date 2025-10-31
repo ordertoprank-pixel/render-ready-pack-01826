@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 const AIGenerator = () => {
   const [prompt, setPrompt] = useState("");
@@ -152,30 +153,35 @@ const AIGenerator = () => {
     if (!canvasRef) return;
     setIsDrawing(true);
     const rect = canvasRef.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const scaleX = canvasRef.width / rect.width;
+    const scaleY = canvasRef.height / rect.height;
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
     setCircledArea([{x, y}]);
   };
 
   const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!isDrawing || !canvasRef) return;
     const rect = canvasRef.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    
-    setCircledArea(prev => [...prev, {x, y}]);
+    const scaleX = canvasRef.width / rect.width;
+    const scaleY = canvasRef.height / rect.height;
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
     
     const ctx = canvasRef.getContext('2d');
     if (ctx && circledArea.length > 0) {
       const lastPoint = circledArea[circledArea.length - 1];
       ctx.strokeStyle = '#ef4444';
-      ctx.lineWidth = 3;
+      ctx.lineWidth = 4;
       ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
       ctx.beginPath();
       ctx.moveTo(lastPoint.x, lastPoint.y);
       ctx.lineTo(x, y);
       ctx.stroke();
     }
+    
+    setCircledArea(prev => [...prev, {x, y}]);
   };
 
   const stopDrawing = () => {
@@ -274,6 +280,10 @@ const AIGenerator = () => {
         setCircledArea([]);
       }}>
         <DialogContent className="max-w-6xl p-0">
+          <VisuallyHidden>
+            <DialogTitle>Image Preview</DialogTitle>
+            <DialogDescription>View and edit your generated image</DialogDescription>
+          </VisuallyHidden>
           {selectedImageIndex !== null && (
             <div className="relative">
               {isRemovalMode ? (

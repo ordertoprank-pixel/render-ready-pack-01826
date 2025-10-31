@@ -13,6 +13,8 @@ interface ControlPanelProps {
   onBackgroundImageUpload: (imageUrl: string | null) => void;
   backgroundBlur: number;
   onBackgroundBlurChange: (blur: number) => void;
+  backgroundFit: "cover" | "contain" | "fill";
+  onBackgroundFitChange: (fit: "cover" | "contain" | "fill") => void;
   pouchColor: string;
   onPouchColorChange: (color: string) => void;
   onExport: () => void;
@@ -27,6 +29,8 @@ export const ControlPanel = ({
   onBackgroundImageUpload,
   backgroundBlur,
   onBackgroundBlurChange,
+  backgroundFit,
+  onBackgroundFitChange,
   pouchColor,
   onPouchColorChange,
   onExport,
@@ -227,6 +231,32 @@ export const ControlPanel = ({
                   onChange={(e) => onBackgroundBlurChange(Number(e.target.value))}
                   className="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary"
                 />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm">Fit Mode</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  <Button
+                    onClick={() => onBackgroundFitChange("cover")}
+                    variant={backgroundFit === "cover" ? "default" : "outline"}
+                    size="sm"
+                  >
+                    Cover
+                  </Button>
+                  <Button
+                    onClick={() => onBackgroundFitChange("contain")}
+                    variant={backgroundFit === "contain" ? "default" : "outline"}
+                    size="sm"
+                  >
+                    Contain
+                  </Button>
+                  <Button
+                    onClick={() => onBackgroundFitChange("fill")}
+                    variant={backgroundFit === "fill" ? "default" : "outline"}
+                    size="sm"
+                  >
+                    Fill
+                  </Button>
+                </div>
               </div>
             </>
           )}

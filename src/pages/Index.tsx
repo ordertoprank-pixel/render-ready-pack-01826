@@ -10,6 +10,7 @@ const Index = () => {
   const [backgroundColor, setBackgroundColor] = useState("#f8fafc");
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
   const [backgroundBlur, setBackgroundBlur] = useState(0);
+  const [backgroundFit, setBackgroundFit] = useState<"cover" | "contain" | "fill">("cover");
   const [pouchColor, setPouchColor] = useState("#e2e8f0");
 
   const handleExport = () => {
@@ -51,6 +52,7 @@ const Index = () => {
                 backgroundColor={backgroundColor}
                 backgroundImage={backgroundImage}
                 backgroundBlur={backgroundBlur}
+                backgroundFit={backgroundFit}
                 pouchColor={pouchColor}
               />
             </div>
@@ -66,6 +68,8 @@ const Index = () => {
             onBackgroundImageUpload={setBackgroundImage}
             backgroundBlur={backgroundBlur}
             onBackgroundBlurChange={setBackgroundBlur}
+            backgroundFit={backgroundFit}
+            onBackgroundFitChange={setBackgroundFit}
             pouchColor={pouchColor}
             onPouchColorChange={setPouchColor}
             onExport={handleExport}

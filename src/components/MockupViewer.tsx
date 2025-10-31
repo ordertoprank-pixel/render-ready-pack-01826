@@ -6,10 +6,22 @@ interface MockupViewerProps {
   backgroundColor: string;
   backgroundImage: string | null;
   backgroundBlur: number;
+  backgroundFit: "cover" | "contain" | "fill";
   pouchColor: string;
 }
 
-export const MockupViewer = ({ designImage, backDesignImage, backgroundColor, backgroundImage, backgroundBlur, pouchColor }: MockupViewerProps) => {
+export const MockupViewer = ({ designImage, backDesignImage, backgroundColor, backgroundImage, backgroundBlur, backgroundFit, pouchColor }: MockupViewerProps) => {
+  const getFitClass = () => {
+    switch (backgroundFit) {
+      case "contain":
+        return "bg-contain";
+      case "fill":
+        return "bg-stretch";
+      default:
+        return "bg-cover";
+    }
+  };
+
   return (
     <div 
       className="w-full h-full rounded-xl overflow-hidden flex items-center justify-center relative" 
@@ -19,10 +31,11 @@ export const MockupViewer = ({ designImage, backDesignImage, backgroundColor, ba
     >
       {backgroundImage && (
         <div 
-          className="absolute inset-0 bg-cover bg-center"
+          className={`absolute inset-0 bg-center ${getFitClass()}`}
           style={{
             backgroundImage: `url(${backgroundImage})`,
             filter: `blur(${backgroundBlur}px)`,
+            backgroundSize: backgroundFit === "fill" ? "100% 100%" : undefined,
           }}
         />
       )}

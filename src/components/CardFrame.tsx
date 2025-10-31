@@ -150,7 +150,7 @@ export const CardFrame = ({
       {/* Inner content area - black background for uploaded image */}
       <div 
         ref={imageRef}
-        className="relative mx-[0.875rem] mt-[1.25rem] mb-[0.5rem] h-[calc(100%-1.75rem)] rounded-[1.5rem] overflow-hidden bg-black"
+        className="relative mx-[0.875rem] my-[0.875rem] h-[calc(100%-1.75rem)] rounded-[1.5rem] overflow-hidden bg-black"
       >
         {designImage ? (
           <>

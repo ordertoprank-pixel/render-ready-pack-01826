@@ -29,6 +29,7 @@ const AIGenerator = () => {
   const [circledArea, setCircledArea] = useState<{x: number, y: number}[]>([]);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [isRedesigning, setIsRedesigning] = useState(false);
+  const [referenceImage, setReferenceImage] = useState<string | null>(null);
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
@@ -38,29 +39,59 @@ const AIGenerator = () => {
 
     setIsGenerating(true);
     try {
-      // Generate 4 variations in parallel
-      const promises = Array.from({ length: 4 }, () =>
-        supabase.functions.invoke("generate-image", {
-          body: { prompt },
-        })
-      );
+      // If there's a reference image, use edit-image, otherwise use generate-image
+      if (referenceImage) {
+        const promises = Array.from({ length: 4 }, () =>
+          supabase.functions.invoke("edit-image", {
+            body: { 
+              imageUrl: referenceImage, 
+              prompt: `Based on this reference image: ${prompt}`
+            },
+          })
+        );
 
-      const results = await Promise.all(promises);
-      
-      const newImages: string[] = [];
-      results.forEach(({ data, error }) => {
-        if (error) {
-          console.error("Error generating image:", error);
-        } else if (data?.image) {
-          newImages.push(data.image);
+        const results = await Promise.all(promises);
+        
+        const newImages: string[] = [];
+        results.forEach(({ data, error }) => {
+          if (error) {
+            console.error("Error generating image:", error);
+          } else if (data?.image) {
+            newImages.push(data.image);
+          }
+        });
+
+        if (newImages.length > 0) {
+          setGeneratedImages((prev) => [...newImages, ...prev]);
+          toast.success(`${newImages.length} variations generated successfully!`);
+        } else {
+          throw new Error("No images were generated");
         }
-      });
-
-      if (newImages.length > 0) {
-        setGeneratedImages((prev) => [...newImages, ...prev]);
-        toast.success(`${newImages.length} image variations generated successfully!`);
       } else {
-        throw new Error("No images were generated");
+        // Generate 4 variations in parallel
+        const promises = Array.from({ length: 4 }, () =>
+          supabase.functions.invoke("generate-image", {
+            body: { prompt },
+          })
+        );
+
+        const results = await Promise.all(promises);
+        
+        const newImages: string[] = [];
+        results.forEach(({ data, error }) => {
+          if (error) {
+            console.error("Error generating image:", error);
+          } else if (data?.image) {
+            newImages.push(data.image);
+          }
+        });
+
+        if (newImages.length > 0) {
+          setGeneratedImages((prev) => [...newImages, ...prev]);
+          toast.success(`${newImages.length} image variations generated successfully!`);
+        } else {
+          throw new Error("No images were generated");
+        }
       }
     } catch (error) {
       console.error("Error generating images:", error);
@@ -265,6 +296,17 @@ const AIGenerator = () => {
     reader.readAsDataURL(file);
   };
 
+  const handleReferenceImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setReferenceImage(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleRedesign = async () => {
     if (!uploadedImage) {
       toast.error("Please upload an image first");
@@ -343,6 +385,33 @@ const AIGenerator = () => {
 
             <TabsContent value="generate">
               <div className="bg-card/50 backdrop-blur-sm border border-border rounded-xl p-6 space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="reference-upload">Upload reference image (optional)</Label>
+                  <Input
+                    id="reference-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleReferenceImageUpload}
+                    className="h-12"
+                  />
+                </div>
+                {referenceImage && (
+                  <div className="relative">
+                    <img
+                      src={referenceImage}
+                      alt="Reference preview"
+                      className="w-full h-48 object-cover rounded-lg border border-border"
+                    />
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      className="absolute top-2 right-2"
+                      onClick={() => setReferenceImage(null)}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                )}
                 <div className="space-y-2">
                   <Label htmlFor="prompt">Describe your image</Label>
                   <Input

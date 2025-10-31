@@ -37,19 +37,33 @@ const AIGenerator = () => {
 
     setIsGenerating(true);
     try {
-      const { data, error } = await supabase.functions.invoke("generate-image", {
-        body: { prompt },
+      // Generate 4 variations in parallel
+      const promises = Array.from({ length: 4 }, () =>
+        supabase.functions.invoke("generate-image", {
+          body: { prompt },
+        })
+      );
+
+      const results = await Promise.all(promises);
+      
+      const newImages: string[] = [];
+      results.forEach(({ data, error }) => {
+        if (error) {
+          console.error("Error generating image:", error);
+        } else if (data?.image) {
+          newImages.push(data.image);
+        }
       });
 
-      if (error) throw error;
-
-      if (data?.image) {
-        setGeneratedImages((prev) => [data.image, ...prev]);
-        toast.success("Image generated successfully!");
+      if (newImages.length > 0) {
+        setGeneratedImages((prev) => [...newImages, ...prev]);
+        toast.success(`${newImages.length} image variations generated successfully!`);
+      } else {
+        throw new Error("No images were generated");
       }
     } catch (error) {
-      console.error("Error generating image:", error);
-      toast.error("Failed to generate image. Please try again.");
+      console.error("Error generating images:", error);
+      toast.error("Failed to generate images. Please try again.");
     } finally {
       setIsGenerating(false);
     }

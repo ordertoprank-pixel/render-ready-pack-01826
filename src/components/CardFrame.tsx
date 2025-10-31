@@ -26,6 +26,7 @@ export const CardFrame = ({
   const [isRotating, setIsRotating] = useState(false);
   const [resizingHandle, setResizingHandle] = useState<ResizeHandle>(null);
   const [showHandles, setShowHandles] = useState(false);
+  const [isSelected, setIsSelected] = useState(false);
   const dragStart = useRef({ x: 0, y: 0 });
   const rotationStart = useRef({ rotation: 0, angle: 0 });
   const resizeStart = useRef({ scale: { x: 1, y: 1 }, mouse: { x: 0, y: 0 } });
@@ -115,7 +116,23 @@ export const CardFrame = ({
     };
   }, [isDragging, isRotating, resizingHandle]);
 
+  useEffect(() => {
+    const onDocMouseDown = (e: MouseEvent) => {
+      if (!cardRef.current) return;
+      if (!cardRef.current.contains(e.target as Node)) {
+        if (!isDragging && !isRotating && !resizingHandle) {
+          setIsSelected(false);
+          setShowHandles(false);
+        }
+      }
+    };
+    document.addEventListener('mousedown', onDocMouseDown);
+    return () => document.removeEventListener('mousedown', onDocMouseDown);
+  }, [isDragging, isRotating, resizingHandle]);
+
   const handleMouseDown = (e: React.MouseEvent) => {
+    setIsSelected(true);
+    setShowHandles(true);
     setIsDragging(true);
     dragStart.current = { x: e.clientX, y: e.clientY };
     e.preventDefault();
@@ -123,6 +140,8 @@ export const CardFrame = ({
 
   const handleRotateStart = (e: React.MouseEvent) => {
     e.stopPropagation();
+    setIsSelected(true);
+    setShowHandles(true);
     setIsRotating(true);
     
     if (cardRef.current) {
@@ -166,7 +185,7 @@ export const CardFrame = ({
       onMouseDown={handleMouseDown}
       onWheel={handleWheel}
       onMouseEnter={() => setShowHandles(true)}
-      onMouseLeave={() => !resizingHandle && !isRotating && setShowHandles(false)}
+      onMouseLeave={() => !resizingHandle && !isRotating && !isSelected && setShowHandles(false)}
     >
       {/* Card frame with enhanced shadow */}
       <div 

@@ -272,19 +272,33 @@ const AIGenerator = () => {
 
     setIsRedesigning(true);
     try {
-      const { data, error } = await supabase.functions.invoke("edit-image", {
-        body: { 
-          imageUrl: uploadedImage, 
-          prompt: "Completely redesign and reimagine this image with a creative, artistic interpretation. Transform it into a stunning piece of art with enhanced colors, composition, and style while maintaining the core subject matter."
-        },
+      // Generate 4 redesign variations in parallel
+      const promises = Array.from({ length: 4 }, () =>
+        supabase.functions.invoke("edit-image", {
+          body: { 
+            imageUrl: uploadedImage, 
+            prompt: "Completely redesign and reimagine this image with a creative, artistic interpretation. Transform it into a stunning piece of art with enhanced colors, composition, and style while maintaining the core subject matter."
+          },
+        })
+      );
+
+      const results = await Promise.all(promises);
+      
+      const newImages: string[] = [];
+      results.forEach(({ data, error }) => {
+        if (error) {
+          console.error("Error redesigning image:", error);
+        } else if (data?.image) {
+          newImages.push(data.image);
+        }
       });
 
-      if (error) throw error;
-
-      if (data?.image) {
-        setGeneratedImages((prev) => [data.image, ...prev]);
-        toast.success("Image redesigned successfully!");
+      if (newImages.length > 0) {
+        setGeneratedImages((prev) => [...newImages, ...prev]);
+        toast.success(`${newImages.length} redesigned variations created successfully!`);
         setUploadedImage(null);
+      } else {
+        throw new Error("No images were generated");
       }
     } catch (error) {
       console.error("Error redesigning image:", error);

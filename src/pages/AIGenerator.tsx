@@ -390,8 +390,12 @@ const AIGenerator = () => {
           </div>
 
           {/* Tabbed Interface */}
-          <Tabs defaultValue="generate" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-4">
+          <Tabs defaultValue="design" className="w-full">
+            <TabsList className="grid w-full grid-cols-3 mb-4">
+              <TabsTrigger value="design" className="gap-2">
+                <Sparkles className="h-4 w-4" />
+                Design
+              </TabsTrigger>
               <TabsTrigger value="generate" className="gap-2">
                 <Wand2 className="h-4 w-4" />
                 Generate
@@ -401,6 +405,39 @@ const AIGenerator = () => {
                 Redesign
               </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="design">
+              <div className="bg-card/50 backdrop-blur-sm border border-border rounded-xl p-6 space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="design-prompt">Describe what you want designed</Label>
+                  <textarea
+                    id="design-prompt"
+                    placeholder="A modern logo for a tech startup with blue and purple gradients..."
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    className="w-full min-h-[120px] px-3 py-2 text-sm rounded-md border border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
+                  />
+                </div>
+                <Button 
+                  onClick={handleGenerate} 
+                  disabled={isGenerating}
+                  className="w-full h-12"
+                  size="lg"
+                >
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      Creating Design...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="mr-2 h-5 w-5" />
+                      Create Design
+                    </>
+                  )}
+                </Button>
+              </div>
+            </TabsContent>
 
             <TabsContent value="generate">
               <div className="bg-card/50 backdrop-blur-sm border border-border rounded-xl p-6 space-y-4">

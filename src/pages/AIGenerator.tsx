@@ -17,10 +17,12 @@ const AIGenerator = () => {
   const [prompt, setPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [removalPrompt, setRemovalPrompt] = useState("");
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [showRemovalDialog, setShowRemovalDialog] = useState(false);
+  const [showRemovalCanvas, setShowRemovalCanvas] = useState(false);
+  const [canvasRef, setCanvasRef] = useState<HTMLCanvasElement | null>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [circledArea, setCircledArea] = useState<{x: number, y: number}[]>([]);
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
@@ -63,6 +65,7 @@ const AIGenerator = () => {
       if (data?.image) {
         setGeneratedImages((prev) => [data.image, ...prev]);
         toast.success("Image upscaled successfully!");
+        setSelectedImageIndex(null);
       }
     } catch (error) {
       console.error("Error upscaling image:", error);
@@ -72,18 +75,39 @@ const AIGenerator = () => {
     }
   };
 
+  const handleSmartRemoveClick = () => {
+    setShowRemovalCanvas(true);
+  };
+
   const handleSmartRemove = async () => {
-    if (!selectedImage || !removalPrompt.trim()) {
-      toast.error("Please enter what you want to remove");
+    if (selectedImageIndex === null || circledArea.length === 0) {
+      toast.error("Please circle the area you want to remove");
       return;
     }
 
     setIsProcessing(true);
     try {
+      const selectedImage = generatedImages[selectedImageIndex];
+      
+      // Create a description of the circled area based on its position
+      const canvasWidth = canvasRef?.width || 1024;
+      const canvasHeight = canvasRef?.height || 1024;
+      const avgX = circledArea.reduce((sum, p) => sum + p.x, 0) / circledArea.length;
+      const avgY = circledArea.reduce((sum, p) => sum + p.y, 0) / circledArea.length;
+      
+      let position = "";
+      if (avgY < canvasHeight / 3) position += "top ";
+      else if (avgY > (2 * canvasHeight) / 3) position += "bottom ";
+      else position += "middle ";
+      
+      if (avgX < canvasWidth / 3) position += "left";
+      else if (avgX > (2 * canvasWidth) / 3) position += "right";
+      else position += "center";
+
       const { data, error } = await supabase.functions.invoke("edit-image", {
         body: { 
           imageUrl: selectedImage, 
-          prompt: `Remove ${removalPrompt} from this image, fill in the background naturally and seamlessly`
+          prompt: `Remove the object in the ${position} area of this image, fill in the background naturally and seamlessly`
         },
       });
 
@@ -92,9 +116,9 @@ const AIGenerator = () => {
       if (data?.image) {
         setGeneratedImages((prev) => [data.image, ...prev]);
         toast.success("Image edited successfully!");
-        setShowRemovalDialog(false);
-        setRemovalPrompt("");
-        setSelectedImage(null);
+        setShowRemovalCanvas(false);
+        setCircledArea([]);
+        setSelectedImageIndex(null);
       }
     } catch (error) {
       console.error("Error editing image:", error);
@@ -117,10 +141,54 @@ const AIGenerator = () => {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       toast.success("Image downloaded!");
+      setSelectedImageIndex(null);
     } catch (error) {
       console.error("Error downloading image:", error);
       toast.error("Failed to download image");
     }
+  };
+
+  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!canvasRef) return;
+    setIsDrawing(true);
+    const rect = canvasRef.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    setCircledArea([{x, y}]);
+  };
+
+  const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!isDrawing || !canvasRef) return;
+    const rect = canvasRef.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    setCircledArea(prev => [...prev, {x, y}]);
+    
+    const ctx = canvasRef.getContext('2d');
+    if (ctx && circledArea.length > 0) {
+      const lastPoint = circledArea[circledArea.length - 1];
+      ctx.strokeStyle = '#ef4444';
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(lastPoint.x, lastPoint.y);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+    }
+  };
+
+  const stopDrawing = () => {
+    setIsDrawing(false);
+  };
+
+  const clearCanvas = () => {
+    if (!canvasRef) return;
+    const ctx = canvasRef.getContext('2d');
+    if (ctx) {
+      ctx.clearRect(0, 0, canvasRef.width, canvasRef.height);
+    }
+    setCircledArea([]);
   };
 
   return (
@@ -183,53 +251,62 @@ const AIGenerator = () => {
                 {generatedImages.map((image, index) => (
                   <div
                     key={index}
-                    className="relative group rounded-xl overflow-hidden border border-border bg-card/30 backdrop-blur-sm"
+                    className="relative rounded-xl overflow-hidden border border-border bg-card/30 backdrop-blur-sm cursor-pointer"
+                    onClick={() => setSelectedImageIndex(selectedImageIndex === index ? null : index)}
                   >
                     <img
                       src={image}
                       alt={`Generated ${index + 1}`}
                       className="w-full h-auto"
                     />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/60 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={() => handleUpscale(image)}
-                          disabled={isProcessing}
-                          size="sm"
-                          variant="secondary"
-                          className="gap-2"
-                        >
-                          {isProcessing ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Sparkles className="h-4 w-4" />
-                          )}
-                          Upscale
-                        </Button>
-                        <Button
-                          onClick={() => {
-                            setSelectedImage(image);
-                            setShowRemovalDialog(true);
-                          }}
-                          disabled={isProcessing}
-                          size="sm"
-                          variant="secondary"
-                          className="gap-2"
-                        >
-                          <Eraser className="h-4 w-4" />
-                          Remove
-                        </Button>
-                        <Button
-                          onClick={() => handleDownload(image, index)}
-                          size="sm"
-                          variant="secondary"
-                          className="gap-2"
-                        >
-                          <Download className="h-4 w-4" />
-                          Download
-                        </Button>
+                    {selectedImageIndex === index && (
+                      <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleUpscale(image);
+                            }}
+                            disabled={isProcessing}
+                            size="sm"
+                            variant="secondary"
+                            className="gap-2"
+                          >
+                            {isProcessing ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Sparkles className="h-4 w-4" />
+                            )}
+                            Upscale
+                          </Button>
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSmartRemoveClick();
+                            }}
+                            disabled={isProcessing}
+                            size="sm"
+                            variant="secondary"
+                            className="gap-2"
+                          >
+                            <Eraser className="h-4 w-4" />
+                            Remove
+                          </Button>
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDownload(image, index);
+                            }}
+                            size="sm"
+                            variant="secondary"
+                            className="gap-2"
+                          >
+                            <Download className="h-4 w-4" />
+                            Download
+                          </Button>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -238,43 +315,62 @@ const AIGenerator = () => {
         </div>
       </main>
 
-      {/* Smart Removal Dialog */}
-      <Dialog open={showRemovalDialog} onOpenChange={setShowRemovalDialog}>
-        <DialogContent>
+      {/* Smart Removal Canvas Dialog */}
+      <Dialog open={showRemovalCanvas} onOpenChange={setShowRemovalCanvas}>
+        <DialogContent className="max-w-4xl">
           <DialogHeader>
-            <DialogTitle>Smart Remove</DialogTitle>
+            <DialogTitle>Circle the area to remove</DialogTitle>
             <DialogDescription>
-              Describe what you want to remove from the image
+              Draw a circle around the object you want to remove from the image
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="removal">What to remove</Label>
-              <Input
-                id="removal"
-                placeholder="e.g., the person, the watermark, the background object..."
-                value={removalPrompt}
-                onChange={(e) => setRemovalPrompt(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && !isProcessing && handleSmartRemove()}
-              />
+            {selectedImageIndex !== null && (
+              <div className="relative">
+                <canvas
+                  ref={setCanvasRef}
+                  width={1024}
+                  height={1024}
+                  className="w-full border border-border rounded-lg cursor-crosshair"
+                  style={{
+                    backgroundImage: `url(${generatedImages[selectedImageIndex]})`,
+                    backgroundSize: 'contain',
+                    backgroundPosition: 'center',
+                    backgroundRepeat: 'no-repeat'
+                  }}
+                  onMouseDown={startDrawing}
+                  onMouseMove={draw}
+                  onMouseUp={stopDrawing}
+                  onMouseLeave={stopDrawing}
+                />
+              </div>
+            )}
+            <div className="flex gap-2">
+              <Button 
+                onClick={clearCanvas}
+                variant="outline"
+                className="flex-1"
+              >
+                Clear
+              </Button>
+              <Button 
+                onClick={handleSmartRemove} 
+                disabled={isProcessing || circledArea.length === 0}
+                className="flex-1"
+              >
+                {isProcessing ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <Eraser className="mr-2 h-4 w-4" />
+                    Remove Circled Area
+                  </>
+                )}
+              </Button>
             </div>
-            <Button 
-              onClick={handleSmartRemove} 
-              disabled={isProcessing || !removalPrompt.trim()}
-              className="w-full"
-            >
-              {isProcessing ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                <>
-                  <Eraser className="mr-2 h-4 w-4" />
-                  Remove
-                </>
-              )}
-            </Button>
           </div>
         </DialogContent>
       </Dialog>

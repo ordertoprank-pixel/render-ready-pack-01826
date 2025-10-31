@@ -79,12 +79,29 @@ serve(async (req) => {
 
     const data = await response.json();
     console.log('AI API response received');
+    console.log('Response structure:', JSON.stringify(data, null, 2));
 
-    const editedImageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    // Try multiple possible response structures
+    let editedImageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    
+    // If not in the expected location, try alternative structure
+    if (!editedImageUrl && data.choices?.[0]?.message?.content) {
+      console.log('Trying alternative response structure');
+      editedImageUrl = data.choices[0].message.content;
+    }
+    
+    // Check if image is directly in data
+    if (!editedImageUrl && data.image) {
+      console.log('Image found in data.image');
+      editedImageUrl = data.image;
+    }
     
     if (!editedImageUrl) {
-      throw new Error('No edited image generated');
+      console.error('Failed to extract image from response:', JSON.stringify(data));
+      throw new Error('No edited image generated - response structure unexpected');
     }
+
+    console.log('Successfully extracted edited image');
 
     return new Response(
       JSON.stringify({ image: editedImageUrl }),

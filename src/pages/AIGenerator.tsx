@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Wand2, Sparkles, Eraser, Download, Type } from "lucide-react";
+import { Loader2, Wand2, Sparkles, Eraser, Download, Type, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 const AIGenerator = () => {
@@ -327,79 +328,95 @@ const AIGenerator = () => {
             </p>
           </div>
 
-          {/* Generator Form */}
-          <div className="bg-card/50 backdrop-blur-sm border border-border rounded-xl p-6 space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="prompt">Describe your image</Label>
-              <Input
-                id="prompt"
-                placeholder="A futuristic city at sunset with flying cars..."
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && !isGenerating && handleGenerate()}
-                className="h-12"
-              />
-            </div>
-            <Button 
-              onClick={handleGenerate} 
-              disabled={isGenerating}
-              className="w-full h-12"
-              size="lg"
-            >
-              {isGenerating ? (
-                <>
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <Wand2 className="mr-2 h-5 w-5" />
-                  Generate Image
-                </>
-              )}
-            </Button>
-          </div>
+          {/* Tabbed Interface */}
+          <Tabs defaultValue="generate" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-4">
+              <TabsTrigger value="generate" className="gap-2">
+                <Wand2 className="h-4 w-4" />
+                Generate
+              </TabsTrigger>
+              <TabsTrigger value="redesign" className="gap-2">
+                <Upload className="h-4 w-4" />
+                Redesign
+              </TabsTrigger>
+            </TabsList>
 
-          {/* Upload & Redesign Form */}
-          <div className="bg-card/50 backdrop-blur-sm border border-border rounded-xl p-6 space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="image-upload">Upload image to redesign</Label>
-              <Input
-                id="image-upload"
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="h-12"
-              />
-            </div>
-            {uploadedImage && (
-              <div className="space-y-4">
-                <img
-                  src={uploadedImage}
-                  alt="Uploaded preview"
-                  className="w-full h-auto rounded-lg border border-border"
-                />
+            <TabsContent value="generate">
+              <div className="bg-card/50 backdrop-blur-sm border border-border rounded-xl p-6 space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="prompt">Describe your image</Label>
+                  <Input
+                    id="prompt"
+                    placeholder="A futuristic city at sunset with flying cars..."
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && !isGenerating && handleGenerate()}
+                    className="h-12"
+                  />
+                </div>
                 <Button 
-                  onClick={handleRedesign} 
-                  disabled={isRedesigning}
+                  onClick={handleGenerate} 
+                  disabled={isGenerating}
                   className="w-full h-12"
                   size="lg"
                 >
-                  {isRedesigning ? (
+                  {isGenerating ? (
                     <>
                       <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                      Redesigning...
+                      Generating...
                     </>
                   ) : (
                     <>
-                      <Sparkles className="mr-2 h-5 w-5" />
-                      Redesign with AI
+                      <Wand2 className="mr-2 h-5 w-5" />
+                      Generate Images
                     </>
                   )}
                 </Button>
               </div>
-            )}
-          </div>
+            </TabsContent>
+
+            <TabsContent value="redesign">
+              <div className="bg-card/50 backdrop-blur-sm border border-border rounded-xl p-6 space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="image-upload">Upload image to redesign</Label>
+                  <Input
+                    id="image-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="h-12"
+                  />
+                </div>
+                {uploadedImage && (
+                  <div className="space-y-4">
+                    <img
+                      src={uploadedImage}
+                      alt="Uploaded preview"
+                      className="w-full h-auto rounded-lg border border-border"
+                    />
+                    <Button 
+                      onClick={handleRedesign} 
+                      disabled={isRedesigning}
+                      className="w-full h-12"
+                      size="lg"
+                    >
+                      {isRedesigning ? (
+                        <>
+                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                          Redesigning...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="mr-2 h-5 w-5" />
+                          Redesign with AI
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
 
           {/* Generated Images Grid */}
           {generatedImages.length > 0 && (

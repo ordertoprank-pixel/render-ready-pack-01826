@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,7 +24,7 @@ const AIGenerator = () => {
   const [isRemovalMode, setIsRemovalMode] = useState(false);
   const [isTextMode, setIsTextMode] = useState(false);
   const [textToAdd, setTextToAdd] = useState("");
-  const [canvasRef, setCanvasRef] = useState<HTMLCanvasElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [circledArea, setCircledArea] = useState<{x: number, y: number}[]>([]);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
@@ -179,8 +179,8 @@ const AIGenerator = () => {
       const selectedImage = generatedImages[selectedImageIndex];
       
       // Create a description of the circled area based on its position
-      const canvasWidth = canvasRef?.width || 1024;
-      const canvasHeight = canvasRef?.height || 1024;
+      const canvasWidth = canvasRef.current?.width || 1024;
+      const canvasHeight = canvasRef.current?.height || 1024;
       const avgX = circledArea.reduce((sum, p) => sum + p.x, 0) / circledArea.length;
       const avgY = circledArea.reduce((sum, p) => sum + p.y, 0) / circledArea.length;
       
@@ -238,25 +238,25 @@ const AIGenerator = () => {
   };
 
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!canvasRef) return;
+    if (!canvasRef.current) return;
     setIsDrawing(true);
-    const rect = canvasRef.getBoundingClientRect();
-    const scaleX = canvasRef.width / rect.width;
-    const scaleY = canvasRef.height / rect.height;
+    const rect = canvasRef.current.getBoundingClientRect();
+    const scaleX = canvasRef.current.width / rect.width;
+    const scaleY = canvasRef.current.height / rect.height;
     const x = (e.clientX - rect.left) * scaleX;
     const y = (e.clientY - rect.top) * scaleY;
     setCircledArea([{x, y}]);
   };
 
   const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isDrawing || !canvasRef) return;
-    const rect = canvasRef.getBoundingClientRect();
-    const scaleX = canvasRef.width / rect.width;
-    const scaleY = canvasRef.height / rect.height;
+    if (!isDrawing || !canvasRef.current) return;
+    const rect = canvasRef.current.getBoundingClientRect();
+    const scaleX = canvasRef.current.width / rect.width;
+    const scaleY = canvasRef.current.height / rect.height;
     const x = (e.clientX - rect.left) * scaleX;
     const y = (e.clientY - rect.top) * scaleY;
     
-    const ctx = canvasRef.getContext('2d');
+    const ctx = canvasRef.current.getContext('2d');
     if (ctx && circledArea.length > 0) {
       const lastPoint = circledArea[circledArea.length - 1];
       ctx.strokeStyle = '#ef4444';
@@ -277,10 +277,10 @@ const AIGenerator = () => {
   };
 
   const clearCanvas = () => {
-    if (!canvasRef) return;
-    const ctx = canvasRef.getContext('2d');
+    if (!canvasRef.current) return;
+    const ctx = canvasRef.current.getContext('2d');
     if (ctx) {
-      ctx.clearRect(0, 0, canvasRef.width, canvasRef.height);
+      ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
     }
     setCircledArea([]);
   };
@@ -589,7 +589,7 @@ const AIGenerator = () => {
                     <p className="text-sm text-muted-foreground">Draw a circle around the object you want to remove</p>
                   </div>
                   <canvas
-                    ref={setCanvasRef}
+                    ref={canvasRef}
                     width={1024}
                     height={1024}
                     className="w-full border border-border rounded-lg cursor-crosshair"

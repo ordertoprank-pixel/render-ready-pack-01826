@@ -36,10 +36,10 @@ export const MockupViewer = ({ designImage, backDesignImage, backgroundColor, ba
           pouchColor={pouchColor}
         />
         
-        {/* Front card - positioned top left, slightly rotated opposite */}
+        {/* Front card - positioned lower left, slightly rotated opposite */}
         <CardFrame 
           designImage={designImage}
-          className="w-[52%] aspect-[3/4] top-[2%] left-[22%]"
+          className="w-[52%] aspect-[3/4] bottom-[20%] left-[8%]"
           rotation={-6}
           pouchColor={pouchColor}
         />

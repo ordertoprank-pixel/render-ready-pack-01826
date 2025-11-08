@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Upload, Download, Palette } from "lucide-react";
+import { Upload, Download, Palette, RotateCcw } from "lucide-react";
 import { useRef } from "react";
 import { toast } from "sonner";
 
@@ -18,6 +18,7 @@ interface ControlPanelProps {
   pouchColor: string;
   onPouchColorChange: (color: string) => void;
   onExport: () => void;
+  onClearAll: () => void;
 }
 
 export const ControlPanel = ({
@@ -34,6 +35,7 @@ export const ControlPanel = ({
   pouchColor,
   onPouchColorChange,
   onExport,
+  onClearAll,
 }: ControlPanelProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const backFileInputRef = useRef<HTMLInputElement>(null);
@@ -112,13 +114,23 @@ export const ControlPanel = ({
 
   return (
     <div className="w-full lg:w-80 bg-card border border-border rounded-xl p-6 space-y-6 backdrop-blur-sm">
-      <div>
-        <h2 className="text-2xl font-bold mb-2 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-          Mockup Controls
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          Customize your product mockup
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h2 className="text-2xl font-bold mb-2 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            Mockup Controls
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Customize your product mockup
+          </p>
+        </div>
+        <Button
+          onClick={onClearAll}
+          variant="outline"
+          size="icon"
+          title="Clear All"
+        >
+          <RotateCcw className="w-4 h-4" />
+        </Button>
       </div>
 
       {/* Upload Design */}

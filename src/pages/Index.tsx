@@ -47,6 +47,17 @@ const Index = () => {
     }
   };
 
+  const handleClearAll = () => {
+    setDesignImage(null);
+    setBackDesignImage(null);
+    setBackgroundColor("#f8fafc");
+    setBackgroundImage(null);
+    setBackgroundBlur(0);
+    setBackgroundFit("cover");
+    setPouchColor("#e2e8f0");
+    toast.success("All cleared!");
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Mesh Gradient Background */}
@@ -100,6 +111,7 @@ const Index = () => {
             pouchColor={pouchColor}
             onPouchColorChange={setPouchColor}
             onExport={handleExport}
+            onClearAll={handleClearAll}
           />
         </div>
       </main>

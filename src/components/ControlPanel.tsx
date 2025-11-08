@@ -141,6 +141,16 @@ export const ControlPanel = ({
         >
           Choose Front Image
         </Button>
+        {onImageUpload && (
+          <Button
+            onClick={() => onImageUpload(null!)}
+            variant="outline"
+            className="w-full"
+            size="sm"
+          >
+            Remove Front Design
+          </Button>
+        )}
         <p className="text-xs text-muted-foreground">
           PNG, JPG up to 5MB
         </p>
@@ -166,6 +176,16 @@ export const ControlPanel = ({
         >
           Choose Back Image
         </Button>
+        {onBackImageUpload && (
+          <Button
+            onClick={() => onBackImageUpload(null!)}
+            variant="outline"
+            className="w-full"
+            size="sm"
+          >
+            Remove Back Design
+          </Button>
+        )}
         <p className="text-xs text-muted-foreground">
           PNG, JPG up to 5MB
         </p>

@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { MockupViewer } from "@/components/MockupViewer";
 import { ControlPanel } from "@/components/ControlPanel";
 import { Package } from "lucide-react";
 import { toast } from "sonner";
+import html2canvas from "html2canvas";
 
 const Index = () => {
   const [designImage, setDesignImage] = useState<string | null>(null);
@@ -12,9 +13,38 @@ const Index = () => {
   const [backgroundBlur, setBackgroundBlur] = useState(0);
   const [backgroundFit, setBackgroundFit] = useState<"cover" | "contain" | "fill">("cover");
   const [pouchColor, setPouchColor] = useState("#e2e8f0");
+  const mockupRef = useRef<HTMLDivElement>(null);
 
-  const handleExport = () => {
-    toast.success("Mockup exported! (Feature coming soon)");
+  const handleExport = async () => {
+    if (!mockupRef.current) {
+      toast.error("Unable to export mockup");
+      return;
+    }
+
+    try {
+      toast.loading("Exporting mockup...");
+      
+      const canvas = await html2canvas(mockupRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: null,
+      });
+
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.download = `mockup-${Date.now()}.png`;
+          link.href = url;
+          link.click();
+          URL.revokeObjectURL(url);
+          toast.success("Mockup exported successfully!");
+        }
+      });
+    } catch (error) {
+      console.error("Export error:", error);
+      toast.error("Failed to export mockup");
+    }
   };
 
   return (
@@ -42,7 +72,7 @@ const Index = () => {
         <div className="flex flex-col lg:flex-row gap-6 items-start">
           {/* Viewer */}
           <div className="flex-1 w-full">
-            <div className="aspect-[4/3] lg:aspect-auto lg:h-[calc(100vh-12rem)] rounded-xl overflow-hidden border border-border shadow-2xl">
+            <div ref={mockupRef} className="aspect-[4/3] lg:aspect-auto lg:h-[calc(100vh-12rem)] rounded-xl overflow-hidden border border-border shadow-2xl">
               <MockupViewer
                 designImage={designImage}
                 backDesignImage={backDesignImage}

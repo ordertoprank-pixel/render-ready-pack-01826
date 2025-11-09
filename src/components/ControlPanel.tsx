@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Upload, Download, Palette, RotateCcw } from "lucide-react";
+import { Upload, Download, Palette, RotateCcw, Eye, EyeOff } from "lucide-react";
 import { useRef } from "react";
 import { toast } from "sonner";
 
@@ -19,6 +19,10 @@ interface ControlPanelProps {
   onPouchColorChange: (color: string) => void;
   onExport: () => void;
   onClearAll: () => void;
+  showFrontCard: boolean;
+  showBackCard: boolean;
+  onShowFrontCardChange: (show: boolean) => void;
+  onShowBackCardChange: (show: boolean) => void;
 }
 
 export const ControlPanel = ({
@@ -36,6 +40,10 @@ export const ControlPanel = ({
   onPouchColorChange,
   onExport,
   onClearAll,
+  showFrontCard,
+  showBackCard,
+  onShowFrontCardChange,
+  onShowBackCardChange,
 }: ControlPanelProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const backFileInputRef = useRef<HTMLInputElement>(null);
@@ -135,10 +143,21 @@ export const ControlPanel = ({
 
       {/* Upload Design */}
       <div className="space-y-3">
-        <Label className="text-base font-semibold flex items-center gap-2">
-          <Upload className="w-4 h-4" />
-          Upload Front Design
-        </Label>
+        <div className="flex items-center justify-between">
+          <Label className="text-base font-semibold flex items-center gap-2">
+            <Upload className="w-4 h-4" />
+            Upload Front Design
+          </Label>
+          <Button
+            onClick={() => onShowFrontCardChange(!showFrontCard)}
+            variant="outline"
+            size="sm"
+            title={showFrontCard ? "Hide Front Card" : "Show Front Card"}
+          >
+            {showFrontCard ? <Eye className="w-4 h-4 mr-1" /> : <EyeOff className="w-4 h-4 mr-1" />}
+            <span className="text-xs">{showFrontCard ? "Visible" : "Hidden"}</span>
+          </Button>
+        </div>
         <input
           ref={fileInputRef}
           type="file"
@@ -170,10 +189,21 @@ export const ControlPanel = ({
 
       {/* Upload Back Design */}
       <div className="space-y-3">
-        <Label className="text-base font-semibold flex items-center gap-2">
-          <Upload className="w-4 h-4" />
-          Upload Back Design
-        </Label>
+        <div className="flex items-center justify-between">
+          <Label className="text-base font-semibold flex items-center gap-2">
+            <Upload className="w-4 h-4" />
+            Upload Back Design
+          </Label>
+          <Button
+            onClick={() => onShowBackCardChange(!showBackCard)}
+            variant="outline"
+            size="sm"
+            title={showBackCard ? "Hide Back Card" : "Show Back Card"}
+          >
+            {showBackCard ? <Eye className="w-4 h-4 mr-1" /> : <EyeOff className="w-4 h-4 mr-1" />}
+            <span className="text-xs">{showBackCard ? "Visible" : "Hidden"}</span>
+          </Button>
+        </div>
         <input
           ref={backFileInputRef}
           type="file"

@@ -8,9 +8,11 @@ interface MockupViewerProps {
   backgroundBlur: number;
   backgroundFit: "cover" | "contain" | "fill";
   pouchColor: string;
+  showFrontCard: boolean;
+  showBackCard: boolean;
 }
 
-export const MockupViewer = ({ designImage, backDesignImage, backgroundColor, backgroundImage, backgroundBlur, backgroundFit, pouchColor }: MockupViewerProps) => {
+export const MockupViewer = ({ designImage, backDesignImage, backgroundColor, backgroundImage, backgroundBlur, backgroundFit, pouchColor, showFrontCard, showBackCard }: MockupViewerProps) => {
   const getFitClass = () => {
     switch (backgroundFit) {
       case "contain":
@@ -42,20 +44,24 @@ export const MockupViewer = ({ designImage, backDesignImage, backgroundColor, ba
       {/* Container for the two overlapping cards */}
       <div className="relative w-full max-w-3xl aspect-square px-12 py-8">
         {/* Back card - positioned bottom right, slightly rotated */}
-        <CardFrame 
-          designImage={backDesignImage}
-          className="w-[52%] aspect-[3/4] bottom-[15%] right-[8%]"
-          rotation={12}
-          pouchColor={pouchColor}
-        />
+        {showBackCard && (
+          <CardFrame 
+            designImage={backDesignImage}
+            className="w-[52%] aspect-[3/4] bottom-[15%] right-[8%]"
+            rotation={12}
+            pouchColor={pouchColor}
+          />
+        )}
         
         {/* Front card - positioned lower left, slightly rotated opposite */}
-        <CardFrame 
-          designImage={designImage}
-          className="w-[52%] aspect-[3/4] bottom-[20%] left-[8%]"
-          rotation={-6}
-          pouchColor={pouchColor}
-        />
+        {showFrontCard && (
+          <CardFrame 
+            designImage={designImage}
+            className="w-[52%] aspect-[3/4] bottom-[20%] left-[8%]"
+            rotation={-6}
+            pouchColor={pouchColor}
+          />
+        )}
       </div>
     </div>
   );

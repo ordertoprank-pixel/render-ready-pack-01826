@@ -13,6 +13,8 @@ const Index = () => {
   const [backgroundBlur, setBackgroundBlur] = useState(0);
   const [backgroundFit, setBackgroundFit] = useState<"cover" | "contain" | "fill">("cover");
   const [pouchColor, setPouchColor] = useState("#e2e8f0");
+  const [showFrontCard, setShowFrontCard] = useState(true);
+  const [showBackCard, setShowBackCard] = useState(true);
   const mockupRef = useRef<HTMLDivElement>(null);
 
   const handleExport = async () => {
@@ -55,6 +57,8 @@ const Index = () => {
     setBackgroundBlur(0);
     setBackgroundFit("cover");
     setPouchColor("#e2e8f0");
+    setShowFrontCard(true);
+    setShowBackCard(true);
     toast.success("All cleared!");
   };
 
@@ -92,6 +96,8 @@ const Index = () => {
                 backgroundBlur={backgroundBlur}
                 backgroundFit={backgroundFit}
                 pouchColor={pouchColor}
+                showFrontCard={showFrontCard}
+                showBackCard={showBackCard}
               />
             </div>
           </div>
@@ -112,6 +118,10 @@ const Index = () => {
             onPouchColorChange={setPouchColor}
             onExport={handleExport}
             onClearAll={handleClearAll}
+            showFrontCard={showFrontCard}
+            showBackCard={showBackCard}
+            onShowFrontCardChange={setShowFrontCard}
+            onShowBackCardChange={setShowBackCard}
           />
         </div>
       </main>

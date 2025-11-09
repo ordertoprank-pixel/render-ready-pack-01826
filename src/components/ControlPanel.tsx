@@ -118,6 +118,18 @@ export const ControlPanel = ({
     { name: "Red", value: "#ef4444" },
     { name: "Blue", value: "#3b82f6" },
     { name: "Gold", value: "#fbbf24" },
+    { name: "Green", value: "#22c55e" },
+    { name: "Purple", value: "#a855f7" },
+    { name: "Pink", value: "#ec4899" },
+    { name: "Orange", value: "#f97316" },
+    { name: "Cyan", value: "#06b6d4" },
+    { name: "Gray", value: "#6b7280" },
+    { name: "Rose", value: "#f43f5e" },
+    { name: "Amber", value: "#f59e0b" },
+    { name: "Teal", value: "#14b8a6" },
+    { name: "Indigo", value: "#6366f1" },
+    { name: "Lime", value: "#84cc16" },
+    { name: "Bronze", value: "#cd7f32" },
   ];
 
   return (
@@ -296,7 +308,7 @@ export const ControlPanel = ({
               </div>
               <div className="space-y-2">
                 <Label className="text-sm">Fit Mode</Label>
-                <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-6 gap-2">
                   <Button
                     onClick={() => onBackgroundFitChange("cover")}
                     variant={backgroundFit === "cover" ? "default" : "outline"}

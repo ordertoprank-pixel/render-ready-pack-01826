@@ -26,11 +26,59 @@ const Index = () => {
     try {
       toast.loading("Exporting mockup...");
       
+      // If there's a background image with blur, we need to handle it specially
+      // because html2canvas doesn't support CSS filter: blur()
+      let originalFilter = '';
+      let blurredBgElement: HTMLDivElement | null = null;
+      
+      if (backgroundImage && backgroundBlur > 0) {
+        // Find the background element
+        const bgElement = mockupRef.current.querySelector('[style*="blur"]') as HTMLDivElement;
+        if (bgElement) {
+          // Store original filter
+          originalFilter = bgElement.style.filter;
+          
+          // Create a canvas to manually blur the image
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.src = backgroundImage;
+          
+          await new Promise((resolve, reject) => {
+            img.onload = resolve;
+            img.onerror = reject;
+          });
+          
+          const tempCanvas = document.createElement('canvas');
+          const ctx = tempCanvas.getContext('2d')!;
+          tempCanvas.width = img.width;
+          tempCanvas.height = img.height;
+          
+          // Apply blur using canvas filter
+          ctx.filter = `blur(${backgroundBlur}px)`;
+          ctx.drawImage(img, 0, 0);
+          
+          // Replace the background image with the blurred canvas version
+          const blurredDataUrl = tempCanvas.toDataURL();
+          bgElement.style.backgroundImage = `url(${blurredDataUrl})`;
+          bgElement.style.filter = 'none';
+        }
+      }
+      
       const canvas = await html2canvas(mockupRef.current, {
         scale: 2,
         useCORS: true,
         backgroundColor: null,
+        allowTaint: true,
       });
+
+      // Restore original filter if we modified it
+      if (originalFilter) {
+        const bgElement = mockupRef.current.querySelector('[style*="background-image"]') as HTMLDivElement;
+        if (bgElement) {
+          bgElement.style.backgroundImage = `url(${backgroundImage})`;
+          bgElement.style.filter = originalFilter;
+        }
+      }
 
       canvas.toBlob((blob) => {
         if (blob) {

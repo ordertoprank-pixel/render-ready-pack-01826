@@ -26,10 +26,19 @@ const Index = () => {
     try {
       toast.loading("Exporting mockup...");
       
+      // Store original styles to restore later
+      const originalClasses = mockupRef.current.className;
+      const originalStyle = mockupRef.current.style.cssText;
+      
+      // Temporarily remove border, shadow, and rounded corners for clean export
+      mockupRef.current.className = mockupRef.current.className
+        .replace(/rounded-\w+/g, '')
+        .replace(/border\S*/g, '')
+        .replace(/shadow-\w+/g, '');
+      
       // If there's a background image with blur, we need to handle it specially
       // because html2canvas doesn't support CSS filter: blur()
       let originalFilter = '';
-      let blurredBgElement: HTMLDivElement | null = null;
       
       if (backgroundImage && backgroundBlur > 0) {
         // Find the background element
@@ -65,12 +74,19 @@ const Index = () => {
       }
       
       const canvas = await html2canvas(mockupRef.current, {
-        scale: 2,
+        scale: 3,
         useCORS: true,
-        backgroundColor: null,
+        backgroundColor: backgroundImage ? null : backgroundColor,
         allowTaint: true,
+        logging: false,
+        width: mockupRef.current.offsetWidth,
+        height: mockupRef.current.offsetHeight,
       });
 
+      // Restore original styles
+      mockupRef.current.className = originalClasses;
+      mockupRef.current.style.cssText = originalStyle;
+      
       // Restore original filter if we modified it
       if (originalFilter) {
         const bgElement = mockupRef.current.querySelector('[style*="background-image"]') as HTMLDivElement;
@@ -90,7 +106,7 @@ const Index = () => {
           URL.revokeObjectURL(url);
           toast.success("Mockup exported successfully!");
         }
-      });
+      }, 'image/png', 1.0);
     } catch (error) {
       console.error("Export error:", error);
       toast.error("Failed to export mockup");

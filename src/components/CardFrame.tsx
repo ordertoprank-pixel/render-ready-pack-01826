@@ -203,14 +203,18 @@ export const CardFrame = ({
       >
         {designImage ? (
           <>
-            <img 
-              src={designImage} 
-              alt="Uploaded design" 
-              className="w-full h-full object-contain transition-transform pointer-events-none"
+            <div
+              className="w-full h-full pointer-events-none transition-transform"
               style={{
+                backgroundImage: `url(${designImage})`,
+                backgroundSize: 'contain',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
                 transform: `scaleX(${scale.x}) scaleY(${scale.y})`,
+                transformOrigin: 'center center',
               }}
             />
+            
             
             {/* Resize Handles */}
             {showHandles && (

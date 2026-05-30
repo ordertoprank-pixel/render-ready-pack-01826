@@ -79,8 +79,11 @@ const Index = () => {
         backgroundColor: backgroundImage ? null : backgroundColor,
         allowTaint: true,
         logging: false,
+        foreignObjectRendering: true,
         width: mockupRef.current.offsetWidth,
         height: mockupRef.current.offsetHeight,
+        windowWidth: mockupRef.current.offsetWidth,
+        windowHeight: mockupRef.current.offsetHeight,
       });
 
       // Restore original styles

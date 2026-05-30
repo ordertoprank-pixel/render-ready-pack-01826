@@ -114,7 +114,7 @@ export const ControlPanel = ({
   const pouchColors = [
     { name: "Silver", value: "#e2e8f0" },
     { name: "White", value: "#ffffff" },
-    { name: "Black", value: "#1e293b" },
+    { name: "Black", value: "#0a0a0a" },
     { name: "Red", value: "#ef4444" },
     { name: "Blue", value: "#3b82f6" },
     { name: "Gold", value: "#fbbf24" },

@@ -3,7 +3,7 @@ import { MockupViewer } from "@/components/MockupViewer";
 import { ControlPanel } from "@/components/ControlPanel";
 import { Package } from "lucide-react";
 import { toast } from "sonner";
-import { toPng } from "html-to-image";
+import { toBlob } from "html-to-image";
 
 const Index = () => {
   const [designImage, setDesignImage] = useState<string | null>(null);

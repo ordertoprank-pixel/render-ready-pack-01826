@@ -33,8 +33,11 @@ const Index = () => {
       const width = node.offsetWidth;
       const height = node.offsetHeight;
 
-      const dataUrl = await toPng(node, {
-        pixelRatio: 3,
+      // Keep the total pixel count sane so the blob never blows up in-browser
+      const pixelRatio = width * height > 1_200_000 ? 2 : 3;
+
+      const blob = await toBlob(node, {
+        pixelRatio,
         width,
         height,
         cacheBust: true,
@@ -50,10 +53,32 @@ const Index = () => {
 
       node.classList.remove("is-exporting");
 
+      if (!blob) throw new Error("Renderer returned no image data");
+
+      const url = URL.createObjectURL(blob);
+      const filename = `mockup-${Date.now()}.png`;
+
+      // Anchor download (works in top-level windows)
       const link = document.createElement("a");
-      link.download = `mockup-${Date.now()}.png`;
-      link.href = dataUrl;
+      link.href = url;
+      link.download = filename;
+      link.rel = "noopener";
+      link.style.display = "none";
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
+
+      // Fallback for sandboxed preview iframes where downloads are blocked:
+      // open the image in a new tab so it can be saved manually.
+      try {
+        if (window.top !== window.self) {
+          window.open(url, "_blank", "noopener");
+        }
+      } catch {
+        window.open(url, "_blank", "noopener");
+      }
+
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
 
       toast.dismiss(loadingId);
       toast.success("Mockup exported successfully!");
@@ -61,9 +86,12 @@ const Index = () => {
       node.classList.remove("is-exporting");
       console.error("Export error:", error);
       toast.dismiss(loadingId);
-      toast.error("Failed to export mockup");
+      toast.error(
+        `Failed to export mockup: ${error instanceof Error ? error.message : "unknown error"}`
+      );
     }
   };
+
 
 
   const handleClearAll = () => {

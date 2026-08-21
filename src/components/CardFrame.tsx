@@ -219,7 +219,7 @@ export const CardFrame = ({
             {/* Resize Handles */}
             {showHandles && (
               <>
-                <div data-export-hide className="absolute inset-0 pointer-events-none">
+                <div className="absolute inset-0 pointer-events-none">
                   {/* Corner Handles */}
                   <div 
                     className="absolute -top-1 -left-1 w-3 h-3 bg-primary border-2 border-white rounded-full cursor-nw-resize pointer-events-auto z-10"
@@ -265,7 +265,6 @@ export const CardFrame = ({
 
       {showHandles && (
         <div 
-          data-export-hide
           className="absolute -top-12 left-1/2 -translate-x-1/2 pointer-events-auto z-20"
           onMouseEnter={() => setShowHandles(true)}
         >

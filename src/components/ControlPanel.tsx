@@ -118,7 +118,6 @@ export const ControlPanel = ({
     { name: "Red", value: "#ef4444" },
     { name: "Blue", value: "#3b82f6" },
     { name: "Gold", value: "#fbbf24" },
-    { name: "Yellow", value: "#facc15" },
     { name: "Green", value: "#22c55e" },
     { name: "Purple", value: "#a855f7" },
     { name: "Pink", value: "#ec4899" },

@@ -96,19 +96,36 @@ const Index = () => {
         }
       }
 
-      canvas.toBlob((blob) => {
-        if (blob) {
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement("a");
-          link.download = `mockup-${Date.now()}.png`;
-          link.href = url;
-          link.click();
-          URL.revokeObjectURL(url);
-          toast.success("Mockup exported successfully!");
-        }
-      }, 'image/png', 1.0);
+      const triggerDownload = (href: string, revoke?: () => void) => {
+        const link = document.createElement("a");
+        link.download = `mockup-${Date.now()}.png`;
+        link.href = href;
+        link.rel = "noopener";
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => {
+          document.body.removeChild(link);
+          revoke?.();
+        }, 2000);
+      };
+
+      const blob: Blob | null = await new Promise((resolve) =>
+        canvas.toBlob((b) => resolve(b), "image/png", 1.0)
+      );
+
+      toast.dismiss();
+
+      if (blob) {
+        const url = URL.createObjectURL(blob);
+        triggerDownload(url, () => URL.revokeObjectURL(url));
+      } else {
+        // Fallback if toBlob is unavailable/blocked
+        triggerDownload(canvas.toDataURL("image/png"));
+      }
+      toast.success("Mockup exported successfully!");
     } catch (error) {
       console.error("Export error:", error);
+      toast.dismiss();
       toast.error("Failed to export mockup");
     }
   };

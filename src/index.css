@@ -114,3 +114,7 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+.is-exporting [data-export-hide] {
+  display: none !important;
+}

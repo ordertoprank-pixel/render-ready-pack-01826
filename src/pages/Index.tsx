@@ -3,7 +3,7 @@ import { MockupViewer } from "@/components/MockupViewer";
 import { ControlPanel } from "@/components/ControlPanel";
 import { Package } from "lucide-react";
 import { toast } from "sonner";
-import html2canvas from "html2canvas";
+import { toPng } from "html-to-image";
 
 const Index = () => {
   const [designImage, setDesignImage] = useState<string | null>(null);
@@ -18,100 +18,53 @@ const Index = () => {
   const mockupRef = useRef<HTMLDivElement>(null);
 
   const handleExport = async () => {
-    if (!mockupRef.current) {
+    const node = mockupRef.current;
+    if (!node) {
       toast.error("Unable to export mockup");
       return;
     }
 
+    const loadingId = toast.loading("Exporting mockup...");
+
     try {
-      toast.loading("Exporting mockup...");
-      
-      // Store original styles to restore later
-      const originalClasses = mockupRef.current.className;
-      const originalStyle = mockupRef.current.style.cssText;
-      
-      // Temporarily remove border, shadow, and rounded corners for clean export
-      mockupRef.current.className = mockupRef.current.className
-        .replace(/rounded-\w+/g, '')
-        .replace(/border\S*/g, '')
-        .replace(/shadow-\w+/g, '');
-      
-      // If there's a background image with blur, we need to handle it specially
-      // because html2canvas doesn't support CSS filter: blur()
-      let originalFilter = '';
-      
-      if (backgroundImage && backgroundBlur > 0) {
-        // Find the background element
-        const bgElement = mockupRef.current.querySelector('[style*="blur"]') as HTMLDivElement;
-        if (bgElement) {
-          // Store original filter
-          originalFilter = bgElement.style.filter;
-          
-          // Create a canvas to manually blur the image
-          const img = new Image();
-          img.crossOrigin = 'anonymous';
-          img.src = backgroundImage;
-          
-          await new Promise((resolve, reject) => {
-            img.onload = resolve;
-            img.onerror = reject;
-          });
-          
-          const tempCanvas = document.createElement('canvas');
-          const ctx = tempCanvas.getContext('2d')!;
-          tempCanvas.width = img.width;
-          tempCanvas.height = img.height;
-          
-          // Apply blur using canvas filter
-          ctx.filter = `blur(${backgroundBlur}px)`;
-          ctx.drawImage(img, 0, 0);
-          
-          // Replace the background image with the blurred canvas version
-          const blurredDataUrl = tempCanvas.toDataURL();
-          bgElement.style.backgroundImage = `url(${blurredDataUrl})`;
-          bgElement.style.filter = 'none';
-        }
-      }
-      
-      const canvas = await html2canvas(mockupRef.current, {
-        scale: 3,
-        useCORS: true,
-        backgroundColor: backgroundImage ? null : backgroundColor,
-        allowTaint: true,
-        logging: false,
-        width: mockupRef.current.offsetWidth,
-        height: mockupRef.current.offsetHeight,
+      // Hide interactive handles so they never appear in the export
+      node.classList.add("is-exporting");
+
+      const width = node.offsetWidth;
+      const height = node.offsetHeight;
+
+      const dataUrl = await toPng(node, {
+        pixelRatio: 3,
+        width,
+        height,
+        cacheBust: true,
+        backgroundColor: backgroundImage ? undefined : backgroundColor,
+        style: {
+          borderRadius: "0",
+          border: "none",
+          boxShadow: "none",
+          width: `${width}px`,
+          height: `${height}px`,
+        },
       });
 
-      // Restore original styles
-      mockupRef.current.className = originalClasses;
-      mockupRef.current.style.cssText = originalStyle;
-      
-      // Restore original filter if we modified it
-      if (originalFilter) {
-        const bgElement = mockupRef.current.querySelector('[style*="background-image"]') as HTMLDivElement;
-        if (bgElement) {
-          bgElement.style.backgroundImage = `url(${backgroundImage})`;
-          bgElement.style.filter = originalFilter;
-        }
-      }
+      node.classList.remove("is-exporting");
 
-      canvas.toBlob((blob) => {
-        if (blob) {
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement("a");
-          link.download = `mockup-${Date.now()}.png`;
-          link.href = url;
-          link.click();
-          URL.revokeObjectURL(url);
-          toast.success("Mockup exported successfully!");
-        }
-      }, 'image/png', 1.0);
+      const link = document.createElement("a");
+      link.download = `mockup-${Date.now()}.png`;
+      link.href = dataUrl;
+      link.click();
+
+      toast.dismiss(loadingId);
+      toast.success("Mockup exported successfully!");
     } catch (error) {
+      node.classList.remove("is-exporting");
       console.error("Export error:", error);
+      toast.dismiss(loadingId);
       toast.error("Failed to export mockup");
     }
   };
+
 
   const handleClearAll = () => {
     setDesignImage(null);

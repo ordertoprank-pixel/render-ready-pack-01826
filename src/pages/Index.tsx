@@ -17,7 +17,7 @@ const Index = () => {
   const [pouchColor, setPouchColor] = useState("#e2e8f0");
   const [showFrontCard, setShowFrontCard] = useState(true);
   const [showBackCard, setShowBackCard] = useState(true);
-  const [exportedImage, setExportedImage] = useState<{ url: string; name: string } | null>(null);
+  const [exportedImage, setExportedImage] = useState<{ url: string; name: string; download: () => void } | null>(null);
   const mockupRef = useRef<HTMLDivElement>(null);
 
   const openInNewTab = async () => {
@@ -242,11 +242,9 @@ const Index = () => {
                   <ExternalLink className="w-4 h-4 mr-2" />
                   Open in new tab
                 </Button>
-                <Button asChild>
-                  <a href={exportedImage.url} download={exportedImage.name}>
-                    <Download className="w-4 h-4 mr-2" />
-                    Download
-                  </a>
+                <Button onClick={exportedImage.download}>
+                  <Download className="w-4 h-4 mr-2" />
+                  Download
                 </Button>
               </div>
             </>

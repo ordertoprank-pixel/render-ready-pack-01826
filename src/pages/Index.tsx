@@ -1,9 +1,11 @@
 import { useState, useRef } from "react";
 import { MockupViewer } from "@/components/MockupViewer";
 import { ControlPanel } from "@/components/ControlPanel";
-import { Package } from "lucide-react";
+import { Download, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import html2canvas from "html2canvas";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const [designImage, setDesignImage] = useState<string | null>(null);
@@ -15,7 +17,15 @@ const Index = () => {
   const [pouchColor, setPouchColor] = useState("#e2e8f0");
   const [showFrontCard, setShowFrontCard] = useState(true);
   const [showBackCard, setShowBackCard] = useState(true);
+  const [exportedImage, setExportedImage] = useState<{ url: string; name: string } | null>(null);
   const mockupRef = useRef<HTMLDivElement>(null);
+
+  const openInNewTab = async () => {
+    if (!exportedImage) return;
+    const blob = await (await fetch(exportedImage.url)).blob();
+    const url = URL.createObjectURL(blob);
+    window.open(url, "_blank", "noopener");
+  };
 
   const handleExport = async () => {
     if (!mockupRef.current) {
@@ -96,33 +106,26 @@ const Index = () => {
         }
       }
 
-      const triggerDownload = (href: string, revoke?: () => void) => {
-        const link = document.createElement("a");
-        link.download = `mockup-${Date.now()}.png`;
-        link.href = href;
-        link.rel = "noopener";
-        document.body.appendChild(link);
-        link.click();
-        setTimeout(() => {
-          document.body.removeChild(link);
-          revoke?.();
-        }, 2000);
-      };
-
-      const blob: Blob | null = await new Promise((resolve) =>
-        canvas.toBlob((b) => resolve(b), "image/png", 1.0)
-      );
+      const dataUrl = canvas.toDataURL("image/png");
+      const fileName = `mockup-${Date.now()}.png`;
 
       toast.dismiss();
 
-      if (blob) {
-        const url = URL.createObjectURL(blob);
-        triggerDownload(url, () => URL.revokeObjectURL(url));
-      } else {
-        // Fallback if toBlob is unavailable/blocked
-        triggerDownload(canvas.toDataURL("image/png"));
+      // Try automatic download (may be blocked inside embedded previews)
+      try {
+        const link = document.createElement("a");
+        link.download = fileName;
+        link.href = dataUrl;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } catch (e) {
+        console.warn("Auto download blocked", e);
       }
-      toast.success("Mockup exported successfully!");
+
+      // Always show the result so the user can save it manually
+      setExportedImage({ url: dataUrl, name: fileName });
+      toast.success("Mockup ready!");
     } catch (error) {
       console.error("Export error:", error);
       toast.dismiss();
@@ -206,6 +209,38 @@ const Index = () => {
           />
         </div>
       </main>
+
+      <Dialog open={!!exportedImage} onOpenChange={(o) => !o && setExportedImage(null)}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Your mockup is ready</DialogTitle>
+            <DialogDescription>
+              Click Download to save it. If nothing happens, open it in a new tab, or right-click (long-press on phone) the image and choose "Save image".
+            </DialogDescription>
+          </DialogHeader>
+          {exportedImage && (
+            <>
+              <img
+                src={exportedImage.url}
+                alt="Exported mockup"
+                className="w-full max-h-[60vh] object-contain rounded-md border border-border"
+              />
+              <div className="flex flex-wrap gap-2 justify-end">
+                <Button variant="outline" onClick={openInNewTab}>
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  Open in new tab
+                </Button>
+                <Button asChild>
+                  <a href={exportedImage.url} download={exportedImage.name}>
+                    <Download className="w-4 h-4 mr-2" />
+                    Download
+                  </a>
+                </Button>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

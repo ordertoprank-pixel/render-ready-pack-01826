@@ -17,7 +17,7 @@ const Index = () => {
   const [pouchColor, setPouchColor] = useState("#e2e8f0");
   const [showFrontCard, setShowFrontCard] = useState(true);
   const [showBackCard, setShowBackCard] = useState(true);
-  const [exportedImage, setExportedImage] = useState<{ url: string; name: string } | null>(null);
+  const [exportedImage, setExportedImage] = useState<{ url: string; name: string; download: () => void } | null>(null);
   const mockupRef = useRef<HTMLDivElement>(null);
 
   const openInNewTab = async () => {
@@ -106,25 +106,35 @@ const Index = () => {
         }
       }
 
-      const dataUrl = canvas.toDataURL("image/png");
       const fileName = `mockup-${Date.now()}.png`;
 
       toast.dismiss();
 
-      // Try automatic download (may be blocked inside embedded previews)
-      try {
+      // Convert to a Blob URL — data: URLs are often blocked from downloading
+      const blob: Blob | null = await new Promise((resolve) =>
+        canvas.toBlob((b) => resolve(b), "image/png", 1.0)
+      );
+      const url = blob ? URL.createObjectURL(blob) : canvas.toDataURL("image/png");
+
+      const downloadNow = () => {
         const link = document.createElement("a");
         link.download = fileName;
-        link.href = dataUrl;
+        link.href = url;
+        link.rel = "noopener";
         document.body.appendChild(link);
         link.click();
-        document.body.removeChild(link);
+        setTimeout(() => document.body.removeChild(link), 1000);
+      };
+
+      // Try automatic download (may be blocked inside embedded previews)
+      try {
+        downloadNow();
       } catch (e) {
         console.warn("Auto download blocked", e);
       }
 
       // Always show the result so the user can save it manually
-      setExportedImage({ url: dataUrl, name: fileName });
+      setExportedImage({ url, name: fileName, download: downloadNow });
       toast.success("Mockup ready!");
     } catch (error) {
       console.error("Export error:", error);
@@ -232,11 +242,9 @@ const Index = () => {
                   <ExternalLink className="w-4 h-4 mr-2" />
                   Open in new tab
                 </Button>
-                <Button asChild>
-                  <a href={exportedImage.url} download={exportedImage.name}>
-                    <Download className="w-4 h-4 mr-2" />
-                    Download
-                  </a>
+                <Button onClick={exportedImage.download}>
+                  <Download className="w-4 h-4 mr-2" />
+                  Download
                 </Button>
               </div>
             </>

@@ -220,11 +220,13 @@ const Index = () => {
           </DialogHeader>
           {exportedImage && (
             <>
-              <img
-                src={exportedImage.url}
-                alt="Exported mockup"
-                className="w-full max-h-[60vh] object-contain rounded-md border border-border"
-              />
+              <div className="p-8 rounded-md border border-border bg-muted/40">
+                <img
+                  src={exportedImage.url}
+                  alt="Exported mockup"
+                  className="w-full max-h-[55vh] object-contain"
+                />
+              </div>
               <div className="flex flex-wrap gap-2 justify-end">
                 <Button variant="outline" onClick={openInNewTab}>
                   <ExternalLink className="w-4 h-4 mr-2" />
